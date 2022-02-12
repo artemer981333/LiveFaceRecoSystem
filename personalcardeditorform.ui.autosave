@@ -1,0 +1,372 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>PersonalCardEditorForm</class>
+ <widget class="QWidget" name="PersonalCardEditorForm">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>915</width>
+    <height>575</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <property name="autoFillBackground">
+   <bool>false</bool>
+  </property>
+  <layout class="QHBoxLayout" name="horizontalLayout">
+   <item>
+    <widget class="QSplitter" name="splitter">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <widget class="QWidget" name="verticalLayoutWidget">
+      <layout class="QVBoxLayout" name="verticalLayout">
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <item>
+          <widget class="QLabel" name="label">
+           <property name="text">
+            <string>Поиск</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="SearchLE"/>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QListWidget" name="CardList">
+         <property name="isWrapping" stdset="0">
+          <bool>false</bool>
+         </property>
+         <property name="layoutMode">
+          <enum>QListView::SinglePass</enum>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="verticalLayoutWidget_2">
+      <layout class="QVBoxLayout" name="verticalLayout_6">
+       <item>
+        <widget class="QTabWidget" name="tabWidget">
+         <property name="currentIndex">
+          <number>2</number>
+         </property>
+         <widget class="QWidget" name="ViewTab">
+          <attribute name="title">
+           <string>Просмотр</string>
+          </attribute>
+          <layout class="QVBoxLayout" name="verticalLayout_2">
+           <item>
+            <widget class="QLabel" name="label_9">
+             <property name="text">
+              <string>Фамилия</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="ViewSurnameLE"/>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_11">
+             <property name="text">
+              <string>Имя</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="ViewNameLE"/>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_14">
+             <property name="text">
+              <string>Отчество</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="ViewLastnameLE"/>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_10">
+             <property name="text">
+              <string>Должность</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="ViewPostLE"/>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_8">
+             <property name="text">
+              <string>Подразделение</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="ViewSubdivisionLE"/>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_12">
+             <property name="text">
+              <string>Фото</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="ViewImagePathLE"/>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_13">
+             <property name="enabled">
+              <bool>true</bool>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+             <property name="scaledContents">
+              <bool>false</bool>
+             </property>
+             <property name="textInteractionFlags">
+              <set>Qt::NoTextInteraction</set>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="verticalSpacer">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="EditTab">
+          <attribute name="title">
+           <string>Редактирование</string>
+          </attribute>
+          <layout class="QVBoxLayout" name="verticalLayout_4">
+           <item>
+            <widget class="QLabel" name="label_23">
+             <property name="text">
+              <string>Фамилия</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="EditSurnameLE"/>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_25">
+             <property name="text">
+              <string>Имя</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="EditNameLE"/>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_28">
+             <property name="text">
+              <string>Отчество</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="EditLastnameLE"/>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_24">
+             <property name="text">
+              <string>Должность</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="EditPostLE"/>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_22">
+             <property name="text">
+              <string>Подразделение</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="EditSubdivisionLE"/>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_26">
+             <property name="text">
+              <string>Фото</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="EditImagePathLE"/>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_27">
+             <property name="enabled">
+              <bool>true</bool>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+             <property name="scaledContents">
+              <bool>false</bool>
+             </property>
+             <property name="textInteractionFlags">
+              <set>Qt::NoTextInteraction</set>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="EditCardButton">
+             <property name="text">
+              <string>Редактировать</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="verticalSpacer_2">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="AddTab">
+          <attribute name="title">
+           <string>Добавление</string>
+          </attribute>
+          <layout class="QVBoxLayout" name="verticalLayout_5">
+           <item>
+            <widget class="QLabel" name="label_35">
+             <property name="text">
+              <string>Фамилия</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="AddSurnameLE"/>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_34">
+             <property name="text">
+              <string>Имя</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="AddNameLE"/>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_33">
+             <property name="text">
+              <string>Отчество</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="AddLastnameLE"/>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_30">
+             <property name="text">
+              <string>Должность</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="AddPostLE"/>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_29">
+             <property name="text">
+              <string>Подразделение</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="AddSubdivisionLE"/>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_31">
+             <property name="text">
+              <string>Фото</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="AddImagePathLE"/>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_32">
+             <property name="enabled">
+              <bool>true</bool>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+             <property name="scaledContents">
+              <bool>false</bool>
+             </property>
+             <property name="textInteractionFlags">
+              <set>Qt::NoTextInteraction</set>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="AddCardButton">
+             <property name="text">
+              <string>Добавить</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="verticalSpacer_3">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>125</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </widget>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
