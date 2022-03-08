@@ -36,6 +36,7 @@ SOURCES += \
     LFR/livefacereco.cpp \
     LFR/mtcnn_new.cpp \
     LFR/videodetectionhandler.cpp \
+    makephotoform.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -49,10 +50,12 @@ HEADERS += \
     LFR/livefacereco.hpp \
     LFR/mtcnn_new.h \
     LFR/videodetectionhandler.h \
+    makephotoform.h
 
 FORMS += \
         mainwindow.ui \
-    personalcardeditorform.ui
+    personalcardeditorform.ui \
+    makephotoform.ui
 
 QMAKE_CXXFLAGS += -fopenmp
 LIBS += -fopenmp

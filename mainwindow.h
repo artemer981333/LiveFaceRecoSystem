@@ -15,6 +15,7 @@
 #include "LFR/videodetectionhandler.h"
 #include "messagehandler.h"
 #include "personalcardeditorform.h"
+#include "makephotoform.h"
 
 #include "opencv2/opencv.hpp"
 
@@ -35,6 +36,7 @@ class MainWindow : public QMainWindow
 	MessageHandler *m_MessageHandler;
 	QThread messageHandlerThread;
 
+	MakePhotoForm *makePhotoForm;
 	PersonalCardEditorForm *cardEditForm;
 	PersonalCardManager *cardManager;
 
@@ -45,15 +47,23 @@ public:
 protected:
 	void closeEvent(QCloseEvent *event);
 
+signals:
+
+	void pixmapUpdated(QPixmap Pixmap);
+
 public slots:
 	void updatePixmap(VideoDetectionHandler::VideoDisplay  *videoDisplay, QPixmap mPixmap);
+	void updateDetectedPerson(int id, double confidence, double similarity);
 	void addMessage(QString message);
+	void updatePersonalCards(const QList<PersonalCard> &cards);
 private slots:
 	void on_AddCameraButton_clicked();
 	void on_OpenPersonalCardEditor_triggered();
+	void on_MakePhoto_triggered();
 };
 
 #endif // MAINWINDOW_H
 
+//иконка
 //карточки, добавление источников разных, интерфейс, QSS, реле, сохранение конфигурации и логов, кринжовая авторизация
 //ВИКИ (ОПИСАНИЕ), ДОКУМЕНТАЦИЯ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

@@ -14,12 +14,12 @@
 
 
 // Adjustable Parameters
-const bool largest_face_only=true;
-const bool record_face=false;
+const bool largest_face_only = true;
+const bool record_face = false;
 const int distance_threshold = 10;
-const float face_thre=0.40;
-const float true_thre=0.89;
-const int jump=10;
+const float face_thre = 0.40;
+const float true_thre = 0.89;
+const int jump = 10;
 const int input_width = 320;
 const int input_height = 240;
 const int output_width = 640;
@@ -27,35 +27,47 @@ const int output_height = 480;
 const string project_path="/home/koss/LiveFaceReco_RaspberryPi";
 //end
 
-const cv::Size frame_size = cv::Size(output_width,output_height);
-const float ratio_x = (float)output_width/ input_width;
-const float ratio_y = (float)output_height/ input_height;
+const cv::Size frame_size = cv::Size(output_width, output_height);
+const float ratio_x = (float)output_width / input_width;
+const float ratio_y = (float)output_height / input_height;
 
 
 class LiveFaceReco
 {
 public:
 
-
 	LiveFaceReco();
 	~LiveFaceReco();
 
 	void connectMessages(std::queue<std::string> *queue, std::mutex *mutex);
 
-	bool isInitialized() const;
-	bool isWorking() const;
-
 	int addVideoSource(int cameraIndex);
 	int addVideoSource(std::string path);
-//	{
-//		VideoDetection *vd = new VideoDetection(m_msgHandler, source, path);
-//		videoDetections.push_back(vd);
-//		return videoDetections.size() - 1;
-//	}
 
+	void loadTmpInfoFromFile(const std::string &fileName);
+	void saveTmpInfoToFile(const std::string &fileName);
 
-	void start();
-	void stop();
+	void addPersonalInfo(const std::string &filename);
+	void updatePersonalInfos(const std::vector<std::string> &filenames);
+
+	std::string fileNameByID(int id);
+
+	struct PersonalInfo
+	{
+		PersonalInfo();
+		PersonalInfo(int id, std::string fileName, cv::Mat face);
+		int id;
+		std::string fileName;
+		cv::Mat face;
+	};
+
+	struct DetectionInfo
+	{
+		cv::Mat frame;
+		double confidence, similarity, fps, angle;
+		int id;
+		bool detected;
+	};
 
 protected:
 
@@ -66,18 +78,19 @@ protected:
 
 		Live live;
 		Arcface reco;
-		vector<cv::Mat> faces;
+		//vector<cv::Mat> faces;
 		cv::Mat src;
 		float v1[5][2];
 
-		std::vector<cv::String> image_names;
-		int image_number;
+		std::vector<PersonalInfo> *personalInfos;
+		//std::vector<cv::String> image_names;
+		//int image_number;
 
 	protected:
 
-		bool readImages();
+		//bool readImages();
 		bool configureLiveDetection();
-		bool convertImages();
+		//bool convertImages();
 		bool initSourceMatrix();
 
 		LFRMsgHandler *m_msgHandler;
@@ -93,7 +106,7 @@ protected:
 
 		void connectMessages(LFRMsgHandler *msgHandler);
 
-		cv::Mat MTCNNDetection();
+		DetectionInfo MTCNNDetection();
 
 		void setDrawing(bool drawing);
 
@@ -102,7 +115,7 @@ protected:
 
 	private:
 
-		int findLargestFace(const vector<Bbox> &faceInfo);
+		int findLargestFace(const vector<Bbox> &faceInfos);
 
 		void drawText(const cv::Mat &img, const string &text, const cv::Point &point, const cv::Scalar &color);
 
@@ -113,7 +126,7 @@ protected:
 		int count;
 		std::queue<float> fps;
 		double sumFPS;
-		vector<Bbox> faceInfo;
+		vector<Bbox> faceInfos;
 		int largest_number;
 
 		double similarity;
@@ -130,10 +143,9 @@ protected:
 
 	vector<VideoDetection *> videoDetections;
 	DetectionSource *source;
+	std::vector<PersonalInfo> personalInfos;
 	LFRMsgHandler msgHandler;
-
-	bool initialized;
-	bool working;
+	Arcface reco;
 
 public:
 
@@ -141,7 +153,7 @@ public:
 	{
 	public:
 
-		cv::Mat nextFrame();
+		DetectionInfo nextFrame();
 
 		friend class LiveFaceReco;
 

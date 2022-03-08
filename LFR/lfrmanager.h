@@ -27,7 +27,10 @@ public:
 	~LFRManager();
 
 	VideoDetectionHandler *addVideoSource(int cameraIndex);
-	void addVideoSource(QString path);
+	void addVideoSource(const QString &path);
+	void updatePersonalCards(QStringList filenames);
+	void addPersonalCard(const QString &filename);
+	QString fileNameByID(int id);
 
 signals:
 	void sendLFR(LiveFaceReco *liveFaceReco);

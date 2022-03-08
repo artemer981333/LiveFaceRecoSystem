@@ -3,9 +3,6 @@
 #include "messagehandler.h"
 
 #include <QObject>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QJsonValue>
 #include <QFile>
 #include <QUuid>
 
@@ -28,14 +25,19 @@ public:
 
 	const QList<PersonalCard> *personalCards() const;
 
+	void addCard(const PersonalCard &card);
+	void editCard(QUuid cardID, const PersonalCard &card);
+	void deleteCard(int cardIndex);
+	void deleteCard(QUuid cardID);
+	void loadCards(const QString &filename);
+	void saveCards(const QString &filename);
+
+	void updateCards(const QList<PersonalCard> &newCards);
 
 signals:
 
 public slots:
 
-	void addCard(const PersonalCard &card);
-	void loadCards(const QString &filename);
-	void saveCards(const QString &filename);
 
 };
 

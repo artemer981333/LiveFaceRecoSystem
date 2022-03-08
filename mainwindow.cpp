@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "personalcardmanager.h"
 #include <QtMultimedia/QCameraInfo>
 #include <QLayout>
 
@@ -9,10 +10,18 @@ MainWindow::MainWindow(QWidget *parent) :
 {
 	ui->setupUi(this);
 
-	cardManager = new PersonalCardManager();
+	ui->splitter->setStretchFactor(0, 1);
+	ui->splitter->setStretchFactor(1, 0);
+	ui->splitter->setStretchFactor(2, 0);
+
+	makePhotoForm = new MakePhotoForm;
+	connect(this, &MainWindow::pixmapUpdated, makePhotoForm, &MakePhotoForm::updatePixmap);
+
+	cardManager = new PersonalCardManager;
 
 	cardEditForm = new PersonalCardEditorForm;
 	cardEditForm->connectCardManager(cardManager);
+	cardManager->loadCards("Cards.json");
 
 
 	QList<QCameraInfo> cameras = QCameraInfo::availableCameras();
@@ -27,6 +36,8 @@ MainWindow::MainWindow(QWidget *parent) :
 	connect(&messageHandlerThread, &QThread::started, m_MessageHandler, &MessageHandler::run);
 	connect(m_MessageHandler, &MessageHandler::finished, &messageHandlerThread, &QThread::quit);
 	connect(m_MessageHandler, &MessageHandler::sendMessage, this, &MainWindow::addMessage);
+
+	connect(cardEditForm, &PersonalCardEditorForm::updateCardList, this, &MainWindow::updatePersonalCards);
 
 	m_MessageHandler->moveToThread(&messageHandlerThread);
 
@@ -47,11 +58,46 @@ void MainWindow::closeEvent(QCloseEvent* event)
 void MainWindow::updatePixmap(VideoDetectionHandler::VideoDisplay *videoDisplay, QPixmap pixmap)
 {
 	videoDisplay->pixmap->setPixmap(pixmap);
+	pixmapUpdated(pixmap);
+}
+
+void MainWindow::updateDetectedPerson(int id, double confidence, double similarity)
+{
+	ui->ConfidenceLE->setText(QString::number(confidence));
+	ui->SimilarityLE->setText(QString::number(similarity));
+	if (confidence < 0.4)
+		return;
+	QString fileName = m_LFRManager->fileNameByID(id);
+	const QList<PersonalCard> *list = cardManager->personalCards();
+	auto card = std::find_if(list->begin(), list->end(), [&](const PersonalCard &card) { return card.imagePath == fileName; });
+	if (card == list->end())
+	{
+		cout << "Unknown filename" << endl;
+		return;
+	}
+	ui->SurnameLE->setText(card->surname);
+	ui->NameLE->setText(card->name);
+	ui->LastnameLE->setText(card->lastname);
+	ui->PostLE->setText(card->post);
+	ui->SubdivisionLE->setText(card->subdivision);
+	QPixmap pixmap(card->imagePath);
+	ui->PhotoLable->setPixmap(pixmap);
 }
 
 void MainWindow::addMessage(QString message)
 {
 	ui->plainTextEdit->appendPlainText(message);
+}
+
+void MainWindow::updatePersonalCards(const QList<PersonalCard> &cards)
+{
+	cardManager->updateCards(cards);
+	QStringList filenames;
+	for (int i = 0; i < cards.size(); ++i)
+		filenames.append(cards[i].imagePath);
+	m_LFRManager->updatePersonalCards(filenames);
+	cardManager->saveCards("Cards.json");
+	cout << "2" << endl;
 }
 
 MainWindow::~MainWindow()
@@ -75,6 +121,7 @@ void MainWindow::on_AddCameraButton_clicked()
 	}
 	videoDisplays.append(new VideoDetectionHandler::VideoDisplay(this));
 	ui->VideoLayout->addWidget(videoDisplays.back()->widget);
+	videoDisplays.back()->widget->fitInView(videoDisplays.back()->pixmap, Qt::KeepAspectRatio);
 	handler->connectDisplay(videoDisplays.back());
 }
 
@@ -82,4 +129,9 @@ void MainWindow::on_AddCameraButton_clicked()
 void MainWindow::on_OpenPersonalCardEditor_triggered()
 {
 	cardEditForm->show();
+}
+
+void MainWindow::on_MakePhoto_triggered()
+{
+	makePhotoForm->show();
 }

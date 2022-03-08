@@ -41,6 +41,7 @@ signals:
 	void finished();
 	void runningChanged(bool running);
 	void frameUpdated(VideoDisplay *display, QPixmap pixmap);
+	void personDetected(int id, double confidence, double similarity);
 
 public slots:
 	void run();

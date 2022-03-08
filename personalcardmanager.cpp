@@ -1,5 +1,9 @@
 #include "personalcardmanager.h"
-#include <fstream>
+#include <QJsonDocument>
+#include <QJsonArray>
+#include <QJsonObject>
+#include <QJsonValue>
+#include <iostream>
 
 PersonalCardManager::PersonalCardManager(QObject *parent) : QObject(parent)
 {
@@ -13,44 +17,93 @@ const QList<PersonalCard> *PersonalCardManager::personalCards() const
 
 void PersonalCardManager::addCard(const PersonalCard &card)
 {
-	cards.append(card);
+	PersonalCard nCard = card;
+	nCard.id = QUuid::createUuid();
+	cards.append(std::move(card));
+}
+
+void PersonalCardManager::editCard(QUuid cardID, const PersonalCard &card)
+{
+	auto it = std::find_if(cards.begin(), cards.end(), [&](const PersonalCard &card){ return card.id == cardID; });
+	if (it == cards.end())
+		return;
+	*it = card;
+	it->id = cardID;
+}
+
+void PersonalCardManager::deleteCard(int cardIndex)
+{
+	if (cards.size() <= cardIndex)
+		return;
+	cards.erase(cards.begin() + cardIndex);
+}
+
+void PersonalCardManager::deleteCard(QUuid cardID)
+{
+	auto it = std::find_if(cards.begin(), cards.end(), [&](const PersonalCard &card){ return card.id == cardID; });
+	if (it == cards.end())
+		return;
+	cards.erase(it);
 }
 
 void PersonalCardManager::loadCards(const QString &filename)
 {
+	cards.clear();
+
 	PersonalCard card;
 
 	QFile file(filename);
 	file.open(QIODevice::ReadOnly);
-	QByteArray arr = file.readAll();
+	if (!file.isOpen())
+		return;
+	QByteArray bArr = file.readAll();
 	file.close();
-	QJsonDocument doc = QJsonDocument::fromJson(arr);
-	QJsonObject obj = doc.object();
-	card.imagePath = obj.take("imagePath").toString();
-	card.name = obj.take("name").toString();
-	card.surname = obj.take("surname").toString();
-	card.lastname = obj.take("lastname").toString();
-	card.post = obj.take("post").toString();
-	card.subdivision = obj.take("subdivision").toString();
-	cards.append(card);
+	QJsonDocument doc = QJsonDocument::fromJson(bArr);
+
+	QJsonArray arr = doc.array();
+	QJsonObject obj;
+	for (int i = 0; i < arr.size(); ++i)
+	{
+		obj = arr[i].toObject();
+		card.id = obj.take("id").toString();
+		card.imagePath = obj.take("imagePath").toString();
+		card.name = obj.take("name").toString();
+		card.surname = obj.take("surname").toString();
+		card.lastname = obj.take("lastname").toString();
+		card.post = obj.take("post").toString();
+		card.subdivision = obj.take("subdivision").toString();
+		cards.append(card);
+	}
 }
 
 void PersonalCardManager::saveCards(const QString &filename)
 {
-	PersonalCard card = cards.back();
-	QJsonObject obj;
-	obj.insert("imagePath", card.imagePath);
-	obj.insert("name", card.name);
-	obj.insert("surname", card.surname);
-	obj.insert("lastname", card.lastname);
-	obj.insert("post", card.post);
-	obj.insert("subdivision", card.subdivision);
 	QJsonDocument doc;
-	doc.setObject(obj);
-	QByteArray arr = doc.toJson();
+	QJsonObject obj;
+	QJsonArray arr;
+	for (int i = 0; i < cards.size(); ++i)
+	{
+		obj.insert("id", cards[i].id.toString());
+		obj.insert("imagePath", cards[i].imagePath);
+		obj.insert("name", cards[i].name);
+		obj.insert("surname", cards[i].surname);
+		obj.insert("lastname", cards[i].lastname);
+		obj.insert("post", cards[i].post);
+		obj.insert("subdivision", cards[i].subdivision);
+		arr.append(obj);
+	}
+	doc.setArray(arr);
+
+	QByteArray barr = doc.toJson();
 
 	QFile file(filename);
 	file.open(QIODevice::WriteOnly);
-	file.write(arr);
+	file.write(barr);
 	file.close();
+}
+
+void PersonalCardManager::updateCards(const QList<PersonalCard> &newCards)
+{
+	cards.clear();
+	cards.append(newCards);
 }

@@ -24,15 +24,20 @@ bool VideoDetectionHandler::running() const
 
 void VideoDetectionHandler::run()
 {
-	cv::Mat frame;
+	LiveFaceReco::DetectionInfo info;
+	cv::Mat &frame = info.frame;
 	clock_t t = clock();
 	while (m_running)
 	{
-		frame = reciever->nextFrame();
+		info = reciever->nextFrame();
 		t = clock();
 		if (!frame.empty())
 		{
-			emit frameUpdated(display, QPixmap::fromImage(QImage(frame.data, frame.cols, frame.rows, frame.step, QImage::Format_RGB888).rgbSwapped()));
+			emit frameUpdated(
+						display,
+						QPixmap::fromImage(
+							QImage(frame.data, frame.cols, frame.rows, frame.step, QImage::Format_RGB888).rgbSwapped()));
+			emit personDetected(info.id, info.confidence, info.similarity);
 		}
 	}
 	emit finished();

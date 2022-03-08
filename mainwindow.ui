@@ -17,14 +17,27 @@
    <layout class="QHBoxLayout" name="horizontalLayout">
     <item>
      <widget class="QSplitter" name="splitter">
+      <property name="midLineWidth">
+       <number>3</number>
+      </property>
       <property name="orientation">
        <enum>Qt::Horizontal</enum>
       </property>
-      <widget class="QWidget" name="">
-       <layout class="QVBoxLayout" name="VideoLayout"/>
+      <property name="childrenCollapsible">
+       <bool>true</bool>
+      </property>
+      <widget class="QWidget" name="layoutWidget">
+       <layout class="QVBoxLayout" name="VideoLayout">
+        <property name="sizeConstraint">
+         <enum>QLayout::SetMaximumSize</enum>
+        </property>
+       </layout>
       </widget>
-      <widget class="QWidget" name="">
+      <widget class="QWidget" name="layoutWidget">
        <layout class="QVBoxLayout" name="verticalLayout_3">
+        <property name="sizeConstraint">
+         <enum>QLayout::SetDefaultConstraint</enum>
+        </property>
         <item>
          <widget class="QLabel" name="label_3">
           <property name="text">
@@ -33,7 +46,11 @@
          </widget>
         </item>
         <item>
-         <widget class="QLineEdit" name="lineEdit"/>
+         <widget class="QLineEdit" name="SurnameLE">
+          <property name="readOnly">
+           <bool>true</bool>
+          </property>
+         </widget>
         </item>
         <item>
          <widget class="QLabel" name="label_2">
@@ -43,7 +60,11 @@
          </widget>
         </item>
         <item>
-         <widget class="QLineEdit" name="lineEdit_2"/>
+         <widget class="QLineEdit" name="NameLE">
+          <property name="readOnly">
+           <bool>true</bool>
+          </property>
+         </widget>
         </item>
         <item>
          <widget class="QLabel" name="label_4">
@@ -53,7 +74,11 @@
          </widget>
         </item>
         <item>
-         <widget class="QLineEdit" name="lineEdit_3"/>
+         <widget class="QLineEdit" name="LastnameLE">
+          <property name="readOnly">
+           <bool>true</bool>
+          </property>
+         </widget>
         </item>
         <item>
          <widget class="QLabel" name="label_7">
@@ -63,7 +88,11 @@
          </widget>
         </item>
         <item>
-         <widget class="QLineEdit" name="lineEdit_4"/>
+         <widget class="QLineEdit" name="PostLE">
+          <property name="readOnly">
+           <bool>true</bool>
+          </property>
+         </widget>
         </item>
         <item>
          <widget class="QLabel" name="label_5">
@@ -73,10 +102,14 @@
          </widget>
         </item>
         <item>
-         <widget class="QLineEdit" name="lineEdit_5"/>
+         <widget class="QLineEdit" name="SubdivisionLE">
+          <property name="readOnly">
+           <bool>true</bool>
+          </property>
+         </widget>
         </item>
         <item>
-         <widget class="QLabel" name="label_8">
+         <widget class="QLabel" name="PhotoLable">
           <property name="enabled">
            <bool>true</bool>
           </property>
@@ -85,6 +118,9 @@
           </property>
           <property name="scaledContents">
            <bool>false</bool>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
           </property>
           <property name="textInteractionFlags">
            <set>Qt::NoTextInteraction</set>
@@ -104,10 +140,41 @@
           </property>
          </spacer>
         </item>
+        <item>
+         <widget class="QLabel" name="label_6">
+          <property name="text">
+           <string>Достоверность</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLineEdit" name="ConfidenceLE">
+          <property name="readOnly">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_8">
+          <property name="text">
+           <string>Сходство</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLineEdit" name="SimilarityLE">
+          <property name="readOnly">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="">
+      <widget class="QWidget" name="layoutWidget">
        <layout class="QVBoxLayout" name="verticalLayout">
+        <property name="sizeConstraint">
+         <enum>QLayout::SetDefaultConstraint</enum>
+        </property>
         <item>
          <layout class="QVBoxLayout" name="verticalLayout_2">
           <item>
@@ -166,6 +233,7 @@
     </property>
     <addaction name="OpenPersonalCardEditor"/>
     <addaction name="separator"/>
+    <addaction name="MakePhoto"/>
    </widget>
    <addaction name="menu"/>
   </widget>
@@ -181,6 +249,11 @@
   <action name="OpenPersonalCardEditor">
    <property name="text">
     <string>Редактор персональных карт...</string>
+   </property>
+  </action>
+  <action name="MakePhoto">
+   <property name="text">
+    <string>Сделать фото...</string>
    </property>
   </action>
  </widget>
