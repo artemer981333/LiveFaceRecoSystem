@@ -21,7 +21,7 @@ public:
 	~MakePhotoForm();
 
 public slots:
-	void updatePixmap(QPixmap mPixmap);
+	void updatePixmap(QPixmap mPixmap, int index);
 
 private slots:
 	void on_OKButton_clicked();

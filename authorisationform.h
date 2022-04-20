@@ -15,6 +15,12 @@ public:
 	explicit AuthorisationForm(QWidget *parent = 0);
 	~AuthorisationForm();
 
+signals:
+	void authorised(QString login);
+
+private slots:
+	void on_pushButton_clicked();
+
 private:
 	Ui::AuthorisationForm *ui;
 };

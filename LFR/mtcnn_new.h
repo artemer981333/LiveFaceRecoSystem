@@ -1,7 +1,6 @@
 #ifndef MTCNN
 #define MTCNN
 #include <stdio.h>
-//#include <algorithm>
 #include <vector>
 #include <math.h>
 #include <iostream>
@@ -29,6 +28,7 @@ struct orderScore
 	int oriOrder;
 };
 
+//класс, отвечающий за распознавание с использованием NCNN
 class mtcnn
 {
 public:
@@ -50,5 +50,4 @@ private:
 	std::vector<orderScore> firstOrderScore_, secondBboxScore_, thirdBboxScore_;
 	int img_w, img_h;
 };
-std::vector<Bbox> detect_mtcnn(const cv::Mat &cv_img);
 #endif //MTCNN

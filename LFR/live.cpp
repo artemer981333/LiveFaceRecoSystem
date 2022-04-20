@@ -1,12 +1,9 @@
-//
-// Created by yuanhao on 20-6-12.
-//
 #include <opencv2/imgproc.hpp>
 #include "live.h"
 #include "livefacereco.hpp"
-//#include<ctime>
-//#include <iostream>
+
 using namespace std;
+
 Live::Live()
 {
 	thread_num_ = 2;
@@ -27,14 +24,12 @@ Live::~Live()
 void Live::LoadModel(std::vector<ModelConfig> &configs)
 {
 	configs_ = configs;
-	clock_t start,finish;
-	//start=clock();
 	model_num_ = static_cast<int>(configs_.size());
 	for (int i = 0; i < model_num_; ++i)
 	{
 		ncnn::Net *net = new ncnn::Net();
-		std::string param = project_path + "/models/live/" + configs_[i].name + ".param";
-		std::string model = project_path + "/models/live/" + configs_[i].name + ".bin";
+		std::string param = "./models/live/" + configs_[i].name + ".param";
+		std::string model = "./models/live/" + configs_[i].name + ".bin";
 		net->load_param(param.c_str());
 		net->load_model(model.c_str());
 
@@ -45,15 +40,14 @@ void Live::LoadModel(std::vector<ModelConfig> &configs)
 
 float Live::Detect(cv::Mat &src, LiveFaceBox &box)
 {
-	float confidence = 0.f;//score
-	clock_t start, finsih;
+	float confidence = 0;
 
 	for (int i = 0; i < model_num_; i++)
 	{
 		cv::Mat roi;
 		if(configs_[i].org_resize)
 		{
-			cv::resize(src, roi,cv::Size(80,80), 0, 0,3);
+			cv::resize(src, roi, cv::Size(80, 80), 0, 0, 3);
 		}
 		else
 		{
@@ -80,7 +74,8 @@ float Live::Detect(cv::Mat &src, LiveFaceBox &box)
 	return confidence;
 }
 
-cv::Rect Live::CalculateBox(LiveFaceBox &box, int w, int h, ModelConfig &config) {
+cv::Rect Live::CalculateBox(LiveFaceBox &box, int w, int h, ModelConfig &config)
+{
 	int x = static_cast<int>(box.x1);
 	int y = static_cast<int>(box.y1);
 	int box_width = static_cast<int>(box.x2 - box.x1 + 1);
@@ -105,23 +100,27 @@ cv::Rect Live::CalculateBox(LiveFaceBox &box, int w, int h, ModelConfig &config)
 	int right_bottom_x = box_center_x + new_width / 2 + shift_x;
 	int right_bottom_y = box_center_y + new_height / 2 + shift_y;
 
-	if (left_top_x < 0) {
+	if (left_top_x < 0)
+	{
 		right_bottom_x -= left_top_x;
 		left_top_x = 0;
 	}
 
-	if (left_top_y < 0) {
+	if (left_top_y < 0)
+	{
 		right_bottom_y -= left_top_y;
 		left_top_y = 0;
 	}
 
-	if (right_bottom_x >= w) {
+	if (right_bottom_x >= w)
+	{
 		int s = right_bottom_x - w + 1;
 		left_top_x -= s;
 		right_bottom_x -= s;
 	}
 
-	if (right_bottom_y >= h) {
+	if (right_bottom_y >= h)
+	{
 		int s = right_bottom_y - h + 1;
 		left_top_y -= s;
 		right_bottom_y -= s;

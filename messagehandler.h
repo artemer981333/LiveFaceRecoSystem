@@ -23,6 +23,9 @@ class MessageHandler : public QObject
 public:
 	explicit MessageHandler(QObject *parent = nullptr);
 
+	void message(const QString &msg);
+	void message(const std::string &msg);
+	void message(const char *msg);
 
 	bool running() const;
 

@@ -7,7 +7,19 @@
 #include <QGraphicsPixmapItem>
 
 #include "livefacereco.hpp"
+#include "opencv2/opencv.hpp"
+#include <mutex>
 
+struct DrawInfo
+{
+	DrawInfo();
+	DrawInfo(const DrawInfo &other);
+	~DrawInfo();
+	cv::Point ld, ru, eye1, eye2, nose, mouse1, mouse2;
+	double fps, angle;
+};
+
+//класс обработчика видеопотока
 class VideoDetectionHandler : public QObject
 {
 	Q_OBJECT
@@ -17,8 +29,11 @@ class VideoDetectionHandler : public QObject
 
 
 	LiveFaceReco::DetectionReceiver *reciever;
+	int videoIndex;
 
 public:
+
+	static std::mutex mut;
 
 	struct VideoDisplay
 	{
@@ -31,8 +46,10 @@ public:
 
 	explicit VideoDetectionHandler(QObject *parent = nullptr);
 
-	void connectReciever(LiveFaceReco::DetectionReceiver *reciever);
+	void connectReciever(LiveFaceReco::DetectionReceiver *reciever, int index);
 	void connectDisplay(VideoDisplay *display);
+
+	int getVideoIndex();
 
 	bool running() const;
 
@@ -40,10 +57,18 @@ signals:
 
 	void finished();
 	void runningChanged(bool running);
-	void frameUpdated(VideoDisplay *display, QPixmap pixmap);
-	void personDetected(int id, double confidence, double similarity);
+	//сигналы об обновлении кадра и идентификации человека
+	void frameUpdated(VideoDisplay *display, cv::Mat pixmap, DrawInfo info);
+	void personDetected(bool detected, int id, double confidence, double similarity, VideoDetectionHandler::VideoDisplay *videoDisplay);
 
 public slots:
+
+	void setCameraInputResolution(int x, int y);
+	void setCameraOutputResolution(int x, int y);
+	void setBrightnessCorrection(int corr);
+	void setContrastCorrection(int corr);
+
+
 	void run();
 	void setRunning(bool running);
 
@@ -52,5 +77,6 @@ private:
 	VideoDisplay *display;
 
 };
+
 
 #endif // VIDEODETECTIONHANDLER_H

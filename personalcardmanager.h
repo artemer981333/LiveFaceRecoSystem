@@ -12,8 +12,10 @@ struct PersonalCard
 	QString imagePath;
 	QString name, surname, lastname;
 	QString post, subdivision;
+	int brightnessCorrection, contrastCorrection;
 };
 
+//класс менеджера персональных карт
 class PersonalCardManager : public QObject
 {
 	Q_OBJECT

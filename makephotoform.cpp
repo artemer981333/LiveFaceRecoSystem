@@ -1,6 +1,7 @@
 #include "makephotoform.h"
 #include "ui_makephotoform.h"
-#include <QFileDialog>
+#include <QFile>
+#include <QMessageBox>
 #include <QPixmap>
 #include <QRect>
 
@@ -24,8 +25,10 @@ MakePhotoForm::~MakePhotoForm()
 	delete ui;
 }
 
-void MakePhotoForm::updatePixmap(QPixmap mPixmap)
+void MakePhotoForm::updatePixmap(QPixmap mPixmap, int index)
 {
+	if (index != 0)
+		return;
 	QPixmap &pix = mPixmap;
 	QRect rect((pix.width() - pix.height()) / 2, 0, pix.height(), pix.height());
 	pix = pix.copy(rect);
@@ -35,19 +38,14 @@ void MakePhotoForm::updatePixmap(QPixmap mPixmap)
 
 void MakePhotoForm::on_OKButton_clicked()
 {
-	QString filename = QFileDialog::getSaveFileName(
-				this,
-				"Сохранение...",
-				"./"
-				);
-	if (filename.isNull() || filename.isEmpty())
-		return;
-	QFile file(filename);
+	if (ui->FilenameLE->text().length() == 0)
+		QMessageBox::information(this, "Введите название файла", "Введите название файла");
+	QFile file("./img/" + ui->FilenameLE->text() + ".jpg");
+	if (file.exists())
+		if (QMessageBox::StandardButton::Cancel == QMessageBox::question(this, "Файл уже существует", "Данный файл уже существует. Заменить?"))
+			return;
 	file.open(QIODevice::WriteOnly);
-//	QPixmap pix = pixmap->pixmap();
-//	QRect rect((pix.width() - pix.height()) / 2, pix.height(), pix.width() - (pix.width() - pix.height()) / 2, 0);
-//	pix = pix.copy(rect);
-//	pix = pix.scaled(QSize(112, 112), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
 	QPixmap pix = pixmap->pixmap().scaled(QSize(112, 112), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
 	pix.save(&file, "jpeg");
+	QMessageBox::information(this, "Сохранено", "Сохранено");
 }

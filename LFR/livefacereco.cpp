@@ -1,43 +1,29 @@
-//
-// Created by markson zhang
-//
-//
-// Edited by Xinghao Chen 2020/7/27
-//
 #include <iostream>
-#include <fstream>
 #include <queue>
-#include <stdio.h>
 #include "include/FacePreprocess.h"
 #include <numeric>
 #include <math.h>
 #include "livefacereco.hpp"
 #include <time.h>
-#include "live.h"
+#include "arcface.h"
 #include "mtcnn_new.h"
+#include "live.h"
+#include <unistd.h>
+
 
 #define PI 3.14159265
 using namespace std;
 using namespace cv;
 
-/**
- * This is a normalize function before calculating the cosine distance. Experiment has proven it can destory the
- * original distribution in order to make two feature more distinguishable.
- * mean value is set to 0 and std is set to 1
- */
-Mat Zscore(const Mat &fc)
+cv::Mat Zscore(const cv::Mat &fc)
 {
 	Mat mean, std;
 	meanStdDev(fc, mean, std);
-	//cout <<"mean is :"<< mean <<"std is :"<< std << endl;
 	Mat fc_norm = (fc - mean) / std;
 	return fc_norm;
 }
 
-/**
- * This module is using to computing the cosine distance between input feature and ground truth feature
- *  */
-inline float CosineDistance(const cv::Mat &v1, const cv::Mat &v2)
+float CosineDistance(const cv::Mat &v1, const cv::Mat &v2)
 {
 	double dot = v1.dot(v2);
 	double denom_v1 = norm(v1);
@@ -45,10 +31,7 @@ inline float CosineDistance(const cv::Mat &v1, const cv::Mat &v2)
 	return dot / (denom_v1 * denom_v2);
 }
 
-/**
- * Calculating the turning angle of face
- *  */
-inline double count_angle(float landmark[5][2])
+double count_angle(float landmark[5][2])
 {
 	double a = landmark[2][1] - (landmark[0][1] + landmark[1][1]) / 2;
 	double b = landmark[2][0] - (landmark[0][0] + landmark[1][0]) / 2;
@@ -56,26 +39,12 @@ inline double count_angle(float landmark[5][2])
 	return angle;
 }
 
-
-/**
- * Formatting output structure
- */
-inline cv::Mat draw_conclucion(String intro, double input, cv::Mat result_cnn, int position) {
-	char string[10];
-	sprintf(string, "%.2f", input);
-	std::string introString(intro);
-	introString += string;
-	putText(result_cnn, introString, cv::Point(5, position), cv::FONT_HERSHEY_SIMPLEX, 0.75, cv::Scalar(0, 255, 255),2);
-	return result_cnn;
+void brightnessCorrection(const cv::Mat bgr_image, int brtCorr, int contrCorr)
+{
+	cv::Mat dst;
+	bgr_image.convertTo(dst, -1, contrCorr / 100.0, brtCorr); //decrease the brightness
+	dst.copyTo(bgr_image);
 }
-/**
- * Face Recognition pipeline using camera.
- * Firstly, it will use MTCNN face detector to detect the faces [x,y,x2,y2] and [eyes, nose, cheeks] landmarks
- * Then, face alignment will be implemented for wraping the face into decided center point
- * Next, the aligned face will be sent into ncnn-mobilefacenet-arcface model and campare with faces in database
- * Finally, some imformation will be shown on the frame
- *
- */
 
 LiveFaceReco::LiveFaceReco()
 {
@@ -83,20 +52,13 @@ LiveFaceReco::LiveFaceReco()
 
 	source = new DetectionSource(&msgHandler);
 	source->personalInfos = &personalInfos;
-
-	//OpenCV Version
-	cout << "OpenCV Version: " << CV_MAJOR_VERSION << "."
-		 << CV_MINOR_VERSION << "."
-		 << CV_SUBMINOR_VERSION << endl;
 }
 
 LiveFaceReco::~LiveFaceReco()
 {
 	msgHandler.stop();
 	for (int i = 0; i < videoDetections.size(); i++)
-	{
-		delete videoDetections[i];
-	}
+		deleteVideoSource(i);
 	delete source;
 }
 
@@ -105,11 +67,16 @@ LiveFaceReco::VideoDetection::VideoDetection(LFRMsgHandler *msgHandler, LiveFace
 	m_msgHandler = msgHandler;
 	m_source = source;
 
-	drawingText = true;
-	recieverConnected = false;
+	output_size = cv::Size(320, 240);
+//	output_size = cv::Size(640, 480);
+//	input_size = cv::Size(640, 480);
+	input_size = cv::Size(320, 240);
+
+	flipping = false;
+	brtCorr = -50;
+	contrCorr = 100;
 	count = 0;
-	similarity = 0;
-	sumFPS = 0;
+	prevMaxPos = -1;
 }
 
 LiveFaceReco::VideoDetection::~VideoDetection()
@@ -122,89 +89,67 @@ bool LiveFaceReco::VideoDetection::connectCamera(int cameraIndex)
 	return initCamera(cameraIndex);
 }
 
+bool LiveFaceReco::VideoDetection::connectCamera(const string &path)
+{
+	return initCamera(path);
+}
+
 void LiveFaceReco::VideoDetection::connectMessages(LFRMsgHandler *msgHandler)
 {
 	m_msgHandler = msgHandler;
 }
 
-std::mutex mutDetect, mutLive, mutArcface;
-
-LiveFaceReco::DetectionInfo LiveFaceReco::VideoDetection::MTCNNDetection()
+LiveFaceReco::FrameInfo LiveFaceReco::VideoDetection::MTCNNDetection()
 {
-	LiveFaceReco::DetectionInfo ret;
-	ret.detected = false;
-	ret.confidence = 0;
-	ret.similarity = 0;
-	ret.id = -1;
+	LiveFaceReco::FrameInfo ret;
+	ret.isDetected = false;
+	ret.angle = 0;
 	if (!videoSrc.isOpened())
-		return LiveFaceReco::DetectionInfo();
-	//cv::String name;
-	//std::string hi_name;
-	//std::string liveface;
-	bool stranger, close_enough;
-	Mat frame;
-	Mat result_cnn;
-	double angle = 0;
-
-	//static int count = 0;
-
-	auto highlightLandmarks = [&](int i)
-	{
-		//highlight the significant landmarks on face
-		Scalar scalar;
-		for (int j = 0; j < 5; ++j)
-		{
-			if (j == 0 or j == 3)
-				scalar = Scalar(0, 255, 0);
-			else if (j == 2)
-				scalar = Scalar(255, 0, 0);
-			else
-				scalar = Scalar(0, 0, 255);
-			cv::circle(result_cnn, Point(faceInfos[i].ppoint[j]*ratio_x, faceInfos[i].ppoint[j + 5]*ratio_y), 3, scalar, FILLED, LINE_AA);
-		}
-	};
-
-	//	auto putName = [&](cv::String imgName)
-	//	{
-	//		//put name
-	//		name = imgName.substr(imgName.rfind('/') + 1, imgName.length() - 4);
-	//		name = name.substr(0, imgName.length() - 4);
-	//		hi_name = "Name: "+ name;
-	//		drawText(result_cnn, hi_name, Point(5, 60), cv::Scalar(0, 255, 255));
-	//		return name;
-	//	};
-
-
+		return LiveFaceReco::FrameInfo();
 
 	count++;
-	clock_t t = clock();
 
-	videoSrc >> frame;
-	cv::flip(frame, frame, 1);
-	resize(frame, result_cnn, frame_size, INTER_LINEAR);
+	//получение кадра
+	mut.lock();
+	if (videoSrc.isOpened())
+		videoSrc >> ret.frame;
+	mut.unlock();
 
-	if (count % 2 == 0)
+	if (ret.frame.empty())
 	{
-		mutDetect.lock();
-		faceInfos = detect_mtcnn(frame);
-		mutDetect.unlock();
+		videoSrc.release();
+		ret.frame = cv::Mat(output_size, CV_32FC1);
+		ret.frame.setTo(cv::Scalar(0, 0, 0));
+		return ret;
+	}
+
+	if (flipping)
+		cv::flip(ret.frame, ret.frame, 1);
+	brightnessCorrection(ret.frame, brtCorr, contrCorr);
+
+	//распознавание лиц происходит через кадр
+	if (count == 3)
+	{
+		faceInfos = detect_mtcnn(ret.frame);
 
 		largest_number = findLargestFace(faceInfos);
+		count = 0;
 	}
 
 	if (!faceInfos.empty())
 	{
-
-		//the faces to operate
-		Bbox faceInfo = faceInfos[largest_number];
+		//определение координат точек для идентификации и рисования
+		Bbox &faceInfo = faceInfos[largest_number];
 		float x_ = faceInfo.x1, y_ = faceInfo.y1, x2_ = faceInfo.x2, y2_ = faceInfo.y2;
 		int x = x_, y = y_, x2 = x2_, y2 = y2_;
-		LiveFaceBox live_box = {x_, y_, x2_, y2_};
 
-		//highlight the significant landmarks on face
-		highlightLandmarks(largest_number);
-		cv::rectangle(result_cnn, Point(x * ratio_x, y * ratio_y), Point(x2 * ratio_x, y2 * ratio_y), cv::Scalar(0, 0, 255), 2);
-		// Perspective Transformation
+		ret.ld = Point(x, y);
+		ret.ru = Point(x2, y2);
+		ret.eye1 = Point(faceInfo.ppoint[0], faceInfo.ppoint[5]);
+		ret.eye2 = Point(faceInfo.ppoint[1], faceInfo.ppoint[6]);
+		ret.nose = Point(faceInfo.ppoint[2], faceInfo.ppoint[7]);
+		ret.mouth1 = Point(faceInfo.ppoint[3], faceInfo.ppoint[8]);
+		ret.mouth2 = Point(faceInfo.ppoint[4], faceInfo.ppoint[9]);
 		float v2[5][2] =
 		{{faceInfo.ppoint[0], faceInfo.ppoint[5]},
 		 {faceInfo.ppoint[1], faceInfo.ppoint[6]},
@@ -213,127 +158,61 @@ LiveFaceReco::DetectionInfo LiveFaceReco::VideoDetection::MTCNNDetection()
 		 {faceInfo.ppoint[4], faceInfo.ppoint[9]},
 		};
 
+		ret.isDetected = true;
+		ret.faceInfo = faceInfo;
 
-		// compute the turning angle
-		angle = count_angle(v2);
-
-		/****************************jump*****************************************************/
-		if (count % jump == 0 && !m_source->personalInfos->empty())
-		{
-
-			cv::Mat dst(5, 2, CV_32FC1, v2);
-			memcpy(dst.data, v2, 2 * 5 * sizeof(float));
-
-			cv::Mat m = FacePreprocess::similarTransform(dst, m_source->src);
-			cv::Mat aligned = frame.clone();
-			cv::warpPerspective(frame, aligned, m, cv::Size(96, 112), INTER_LINEAR);
-			resize(aligned, aligned, Size(112, 112), 0, 0, INTER_LINEAR);
-
-
-			//features of camera image
-			cv::Mat fc2 = m_source->reco.getFeature(aligned);
-
-			// normalize
-			fc2 = Zscore(fc2);
-
-			//the similarity score
-			vector<double> scores;
-			for (unsigned int i = 0; i < m_source->personalInfos->size(); ++ i)
-				scores.push_back(CosineDistance(m_source->personalInfos->at(i).face, fc2));
-			int maxPosition = max_element(scores.begin(), scores.end()) - scores.begin();
-			ret.id = m_source->personalInfos->at(maxPosition).id;
-			similarity = scores[maxPosition];
-			ret.similarity = similarity;
-			scores.clear();
-
-			if (similarity >= face_thre && y2-y >= distance_threshold)
-			{
-
-				//name = putName(m_source->image_names[maxPosition]);
-				//m_msgHandler->addMessage(name);
-				//determin whethe it is a fake face
-				confidence = m_source->live.Detect(frame, live_box);
-				ret.confidence = confidence;
-
-
-				//drawText(result_cnn, to_string(confidence), Point(x*ratio_x, y2*ratio_y+20), cv::Scalar(0,255,255));
-				//liveface = (confidence <= true_thre) ? ("Fake face!!") : ("True face");
-				//drawText(result_cnn, liveface, Point(5, 80), cv::Scalar(0, 0, 255));
-				//m_msgHandler->addMessage(liveface);
-				stranger = false;
-				close_enough = true;
-			}
-			else if(similarity >= face_thre && y2-y < distance_threshold)
-			{
-				//putName(m_source->image_names[maxPosition]);
-				//Ask be closer to avoid mis-reco
-				//drawText(result_cnn, "Closer please", Point(5, 60), cv::Scalar(0, 255, 255));
-				//m_msgHandler->addMessage("Ближе пожалуйста!");
-				stranger = false;
-				close_enough = false;
-			}
-			else
-			{
-				//drawText(result_cnn, "Stranger", Point(5, 60), cv::Scalar(255, 0, 0));
-				//m_msgHandler->addMessage("Не уверен...");
-				stranger = true;
-			}
-		}
-		else
-		{
-			//			if(stranger)
-			//			{
-			//				//drawText(result_cnn, "Stranger", Point(5, 60), cv::Scalar(255, 0, 0));
-			//			}
-			//			else if(close_enough)
-			//			{
-			//				drawText(result_cnn, hi_name, Point(5, 60), cv::Scalar(0, 255, 255));
-			//				drawText(result_cnn, to_string(confidence), Point(x*ratio_x, y2*ratio_y+20), cv::Scalar(0,255,255));
-			//				if (liveface.length() == 9)
-			//					drawText(result_cnn, liveface, Point(5, 80), cv::Scalar(0, 255, 0));
-			//				else
-			//					drawText(result_cnn, liveface, Point(5, 80), cv::Scalar(0, 0, 255));
-			//			}
-			//			else
-			//			{
-			//				drawText(result_cnn, hi_name, Point(5, 60), cv::Scalar(0, 255, 255));
-			//				drawText(result_cnn, "Closer please", Point(5, 80), cv::Scalar(0, 255, 255));
-			//			}
-
-			if (count == 10 * jump - 1)
-				count = 0;
-		}
-		//drawText(result_cnn, to_string(similarity), Point(x*ratio_x, y2*ratio_y), cv::Scalar(0, 255, 0));
+		//вычисление угла поворота лица
+		ret.angle = count_angle(v2);
 	}
-
-
-	fps.push(1000000.0 / (double)(clock() - t));
-	int fpsnum_ = fps.size();
-	float fps_mean;
-	//compute average fps value
-	if(fpsnum_ <= 30)
-	{
-		sumFPS += fps.back();
-		fps_mean = sumFPS /  fpsnum_;
-	}
-	else
-	{
-		sumFPS += fps.back();
-		sumFPS -= fps.front();
-		fps_mean = sumFPS /  30;
-		fps.pop();
-	}
-
-	ret.fps = fps_mean;
-	ret.angle = angle;
-
-	result_cnn = draw_conclucion("FPS: ", fps_mean, result_cnn, 20);//20
-	result_cnn = draw_conclucion("Angle: ", angle, result_cnn, 40);//65
-
-	ret.frame = result_cnn.clone();
 
 	return ret;
+}
 
+LiveFaceReco::DetectionInfo LiveFaceReco::VideoDetection::IdentPerson(cv::Mat frame, Bbox faceInfo)
+{
+	LiveFaceReco::DetectionInfo ret;
+	ret.detected = false;
+	ret.confidence = 0;
+	ret.similarity = 0;
+	ret.id = -1;
+
+	float x_ = faceInfo.x1, y_ = faceInfo.y1, x2_ = faceInfo.x2, y2_ = faceInfo.y2;
+	int x = x_, y = y_, x2 = x2_, y2 = y2_;
+	LiveFaceBox live_box = {x_, y_, x2_, y2_};
+
+	float v2[5][2] =
+	{{faceInfo.ppoint[0], faceInfo.ppoint[5]},
+	 {faceInfo.ppoint[1], faceInfo.ppoint[6]},
+	 {faceInfo.ppoint[2], faceInfo.ppoint[7]},
+	 {faceInfo.ppoint[3], faceInfo.ppoint[8]},
+	 {faceInfo.ppoint[4], faceInfo.ppoint[9]},
+	};
+
+	cv::Mat dst(5, 2, CV_32FC1, v2);
+	memcpy(dst.data, v2, 2 * 5 * sizeof(float));
+
+	cv::Mat m = FacePreprocess::similarTransform(dst, m_source->src);
+	cv::warpPerspective(frame, frame, m, cv::Size(96, 112), INTER_LINEAR);
+	resize(frame, frame, Size(112, 112), 0, 0, INTER_LINEAR);
+
+	//получение данных о лице
+	cv::Mat fc2 = Zscore(m_source->reco->getFeature(frame));
+
+	vector<double> scores;
+	for (unsigned int i = 0; i < m_source->personalInfos->size(); ++i)
+		scores.push_back(CosineDistance(m_source->personalInfos->at(i).face, fc2));
+	int maxPosition = max_element(scores.begin(), scores.end()) - scores.begin();
+	if (maxPosition == prevMaxPos)
+	{
+		ret.id = m_source->personalInfos->at(maxPosition).id;
+		ret.similarity = scores[maxPosition];
+
+		if (ret.similarity >= 0.4/* && y2 - y >= distance_threshold*/)
+			ret.confidence = m_source->live->Detect(frame, live_box);
+		ret.detected = true;
+	}
+	prevMaxPos = maxPosition;
+	return ret;
 }
 
 void LiveFaceReco::connectMessages(std::queue<string> *queue, mutex *mutex)
@@ -353,16 +232,43 @@ int LiveFaceReco::addVideoSource(int cameraIndex)
 	return videoDetections.size() - 1;
 }
 
+int LiveFaceReco::addVideoSource(string path)
+{
+	VideoDetection *vd = new VideoDetection(&msgHandler, source);
+	if (vd->connectCamera(path) == false)
+	{
+		delete vd;
+		return -1;
+	}
+	videoDetections.push_back(vd);
+	videoDetections.back()->setFlipping(false);
+	return videoDetections.size() - 1;
+}
+
+void LiveFaceReco::deleteVideoSource(int index)
+{
+	if (videoDetections.size() <= index)
+		return;
+	if (videoDetections[index] == nullptr)
+		return;
+	delete videoDetections[index];
+	videoDetections[index] = nullptr;
+}
+
 void LiveFaceReco::loadTmpInfoFromFile(const string &fileName)
 {
 	msgHandler.addMessage("Start loading TMP");
-	personalInfos.clear();
 	ifstream file(fileName, ios::binary | ios::ate);
 	if (!file.is_open())
 	{
 		msgHandler.addMessage("Loading failed (can't open file)");
+		string path;
+		path.resize(1000);
+		readlink("/proc/self/exe", &path[0], path.size());
+		msgHandler.addMessage(path);
 		return;
 	}
+	personalInfos.clear();
 	int fileSize = file.tellg();
 	char *bytes = new char[fileSize];
 	char *ptr = bytes;
@@ -387,7 +293,7 @@ void LiveFaceReco::loadTmpInfoFromFile(const string &fileName)
 		info.face = cv::Mat(matHeight, matWidth, matType, ptr).clone();
 		ptr += matSize * sizeof(char);
 		info.fileName = string(ptr);
-		ptr += info.fileName.size() * sizeof(char);
+		ptr += (info.fileName.size() + 1) * sizeof(char);
 		personalInfos.push_back(info);
 	}
 	file.close();
@@ -403,7 +309,7 @@ void LiveFaceReco::saveTmpInfoToFile(const string &fileName)
 	int matSize = personalInfos[0].face.cols * personalInfos[0].face.rows * personalInfos[0].face.elemSize();
 	int fileSize = sizeof(int) + personalInfos.size() * (5 * sizeof(int) + matSize);
 	for (int i = 0; i < personalInfos.size(); ++i)
-		fileSize += personalInfos[i].fileName.size();
+		fileSize += personalInfos[i].fileName.size() + 1;
 	ofstream file(fileName, ios::binary);
 	char *bytes = new char[fileSize];
 	char *ptr = bytes;
@@ -423,29 +329,25 @@ void LiveFaceReco::saveTmpInfoToFile(const string &fileName)
 		ptr += sizeof(int);
 		memcpy(ptr, personalInfos[i].face.data, matSize);
 		ptr += matSize * sizeof(char);
-		memcpy(ptr, personalInfos[i].fileName.c_str(), personalInfos[i].fileName.size());
-		ptr += personalInfos[i].fileName.size() * sizeof(char);
+		memcpy(ptr, personalInfos[i].fileName.c_str(), personalInfos[i].fileName.size() + 1);
+		ptr += (personalInfos[i].fileName.size() + 1) * sizeof(char);
 	}
 	file.write(bytes, fileSize);
 	file.close();
-	msgHandler.addMessage("TMP saved: " + to_string(personalInfos.size()) + "size = " + to_string(fileSize));
+	msgHandler.addMessage("TMP saved: " + to_string(personalInfos.size()) + ", size = " + to_string(fileSize));
 	delete[] bytes;
 }
 
-void LiveFaceReco::addPersonalInfo(const string &filename)
+void LiveFaceReco::updatePersonalInfos(const vector<string> &filenames, const vector<int> &brtCorrs, const vector<int> &contrCorrs)
 {
+	personalInfos.clear();
 	PersonalInfo info;
-	info.face = Zscore(reco.getFeature(cv::imread(filename)));
-	info.id = personalInfos.size();
-	personalInfos.push_back(info);
-}
-
-void LiveFaceReco::updatePersonalInfos(const vector<string> &filenames)
-{
-	PersonalInfo info;
+	cv::Mat img;
 	for (int i = 0; i < filenames.size(); ++i)
 	{
-		info.face = Zscore(reco.getFeature(cv::imread(filenames[i])));
+		img = cv::imread("./img/" + filenames[i]);
+		brightnessCorrection(img, brtCorrs[i], contrCorrs[i]);
+		info.face = Zscore(source->reco->getFeature(img));
 		info.fileName = filenames[i];
 		info.id = i;
 		personalInfos.push_back(info);
@@ -461,38 +363,70 @@ LiveFaceReco::DetectionReceiver *LiveFaceReco::createDetectionReciever(int video
 {
 	if (videoIndex >= videoDetections.size())
 		return nullptr;
-	if (videoDetections[videoIndex]->isRecieverConnected())
-		return nullptr;
 	return new DetectionReceiver(videoDetections[videoIndex]);
 }
 
-void LiveFaceReco::VideoDetection::setDrawing(bool drawing)
+void LiveFaceReco::VideoDetection::setFlipping(bool flipping)
 {
-	drawingText = drawing;
+	this->flipping = flipping;
 }
 
-bool LiveFaceReco::VideoDetection::isRecieverConnected() const
+void LiveFaceReco::VideoDetection::setFrameSize(int x, int y)
 {
-	return recieverConnected;
+	output_size = cv::Size(x, y);
 }
 
-void LiveFaceReco::VideoDetection::setRecieverConnected(bool connected)
+void LiveFaceReco::VideoDetection::setInputSize(int x, int y)
 {
-	recieverConnected = connected;
+	input_size = cv::Size(x, y);
+	mut.lock();
+	videoSrc.set(CAP_PROP_FRAME_WIDTH, input_size.width);
+	videoSrc.set(CAP_PROP_FRAME_HEIGHT, input_size.height);
+	mut.unlock();
+}
+
+void LiveFaceReco::VideoDetection::setBrightnessCorrection(int corr)
+{
+	brtCorr = corr;
+}
+
+void LiveFaceReco::VideoDetection::setContrastCorrection(int corr)
+{
+	contrCorr = corr;
+}
+
+std::vector<Bbox> LiveFaceReco::VideoDetection::detect_mtcnn(const Mat &cv_img)
+{
+	ncnn::Mat ncnn_img = ncnn::Mat::from_pixels(cv_img.data, ncnn::Mat::PIXEL_BGR2RGB, cv_img.cols, cv_img.rows);
+	std::vector<Bbox> finalBbox;
+	mm.detect(ncnn_img, finalBbox);
+	return finalBbox;
 }
 
 bool LiveFaceReco::VideoDetection::initCamera(int cameraIndex)
 {
+	if (videoSrc.isOpened())
+		videoSrc.release();
 	videoSrc.open(cameraIndex);
-	videoSrc.set(CAP_PROP_FRAME_WIDTH, input_width);
-	videoSrc.set(CAP_PROP_FRAME_HEIGHT, input_height);
+	videoSrc.set(CAP_PROP_FRAME_WIDTH, input_size.width);
+	videoSrc.set(CAP_PROP_FRAME_HEIGHT, input_size.height);
+	videoSrc.set(CAP_PROP_FPS, 90);
+	return videoSrc.isOpened();
+}
+
+bool LiveFaceReco::VideoDetection::initCamera(const string &path)
+{
+	if (videoSrc.isOpened())
+		videoSrc.release();
+	videoSrc.open(path);
+	videoSrc.set(CAP_PROP_FRAME_WIDTH, input_size.width);
+	videoSrc.set(CAP_PROP_FRAME_HEIGHT, input_size.height);
 	videoSrc.set(CAP_PROP_FPS, 90);
 	return videoSrc.isOpened();
 }
 
 int LiveFaceReco::VideoDetection::findLargestFace(const vector<Bbox> &faceInfo)
 {
-	//find the laggest face
 	int lagerest_face = 0, largest_number = 0;
 	for (int i = 0; i < faceInfo.size(); i++)
 	{
@@ -507,17 +441,12 @@ int LiveFaceReco::VideoDetection::findLargestFace(const vector<Bbox> &faceInfo)
 	return largest_number;
 }
 
-void LiveFaceReco::VideoDetection::drawText(const Mat &img, const string &text, const Point &point, const Scalar &color)
-{
-	if (drawingText)
-		putText(img, text, point, cv::FONT_HERSHEY_SIMPLEX,0.75, color,2);
-}
-
 LiveFaceReco::DetectionSource::DetectionSource(LFRMsgHandler *msgHandler)
 {
+	live = new Live;
+	reco = new Arcface;
 	m_msgHandler = msgHandler;
 
-	//OpenCV Version
 	cout << "OpenCV Version: " << CV_MAJOR_VERSION << "."
 		 << CV_MINOR_VERSION << "."
 		 << CV_SUBMINOR_VERSION << endl;
@@ -526,63 +455,26 @@ LiveFaceReco::DetectionSource::DetectionSource(LFRMsgHandler *msgHandler)
 	initSourceMatrix();
 }
 
-//bool LiveFaceReco::DetectionSource::readImages()
-//{
-//	// loading faces
-//	std::string pattern_jpg = project_path+ "/img/*.jpg";
-
-//	cv::glob(pattern_jpg, image_names);
-//	image_number = image_names.size();
-//	m_msgHandler->addMessage("loaded " + to_string(image_number) + " pictures...");
-//	//cout << "loaded " << image_number << " pictures..." << endl;
-//	if (image_number == 0)
-//		return false;
-//	return true;
-//}
+LiveFaceReco::DetectionSource::~DetectionSource()
+{
+	delete live;
+	delete reco;
+}
 
 bool LiveFaceReco::DetectionSource::configureLiveDetection()
 {
-	//Live detection configs
 	ModelConfig config1 = {2.7f, 0.0f, 0.0f, 80, 80, "model_1", false};
 	ModelConfig config2 = {4.0f, 0.0f, 0.0f, 80, 80, "model_2", false};
 	vector<ModelConfig> configs;
 	configs.emplace_back(config1);
 	configs.emplace_back(config2);
-	live.LoadModel(configs);
+	live->LoadModel(configs);
 	return true;
 }
 
-//bool LiveFaceReco::DetectionSource::convertImages()
-//{
-//	//convert to vector and store into fc, whcih is benefical to furthur operation
-//	Mat  face;
-//	char str[7];
-//	for (size_t i = 0; i < image_number; ++i)
-//	{
-//		face = cv::imread(image_names[i]);
-//		faces.push_back(reco.getFeature(face));
-//		faces[i] = Zscore(faces[i]);
-//		sprintf(str, "%4.2lf", i*100.0 / (double)(image_number - 1));
-//		m_msgHandler->addMessage("loading[" + string(str) + "%]");
-//		//printf("\rloading[%.2lf%%]",  i*100.0 / (image_number - 1));
-//	}
-//	//cout << endl;
-//	//float factor = 0.709f;
-//	//float threshold[3] = {0.7f, 0.6f, 0.6f};
-//	m_msgHandler->addMessage("loading succeed!" + to_string(image_number) + " pictures in total");
-//	//cout <<"loading succeed! "<<image_number<<" pictures in total"<<endl;
-//	return true;
-//}
-
 bool LiveFaceReco::DetectionSource::initSourceMatrix()
 {
-	// gt face landmark
-	//	v1 = {
-	//		{30.2946f, 51.6963f},
-	//		{65.5318f, 51.5014f},
-	//		{48.0252f, 71.7366f},
-	//		{33.5493f, 92.3655f},
-	//		{62.7299f, 92.2041f}};
+	//магия чисел
 	v1[0][0] = 30.2946f;
 	v1[0][1] = 51.6963f;
 	v1[1][0] = 65.5318f;
@@ -599,9 +491,34 @@ bool LiveFaceReco::DetectionSource::initSourceMatrix()
 	return true;
 }
 
-LiveFaceReco::DetectionInfo LiveFaceReco::DetectionReceiver::nextFrame()
+LiveFaceReco::FrameInfo LiveFaceReco::DetectionReceiver::nextFrame()
 {
 	return videoDetection->MTCNNDetection();
+}
+
+LiveFaceReco::DetectionInfo LiveFaceReco::DetectionReceiver::identPerson(Mat frame, Bbox faceInfo)
+{
+	return videoDetection->IdentPerson(frame, faceInfo);
+}
+
+void LiveFaceReco::DetectionReceiver::setFrameSize(int x, int y)
+{
+	videoDetection->setFrameSize(x, y);
+}
+
+void LiveFaceReco::DetectionReceiver::setInputSize(int x, int y)
+{
+	videoDetection->setInputSize(x, y);
+}
+
+void LiveFaceReco::DetectionReceiver::setBrightnessCorrection(int corr)
+{
+	videoDetection->setBrightnessCorrection(corr);
+}
+
+void LiveFaceReco::DetectionReceiver::setContrastCorrection(int corr)
+{
+	videoDetection->setContrastCorrection(corr);
 }
 
 LiveFaceReco::DetectionReceiver::DetectionReceiver(LiveFaceReco::VideoDetection *videoDetection)

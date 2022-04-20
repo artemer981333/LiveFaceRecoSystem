@@ -1,11 +1,34 @@
 #include "messagehandler.h"
 #include "LFR/livefacereco.hpp"
 #include <QThread>
+#include <QFile>
+#include <QTextStream>
 
 MessageHandler::MessageHandler(QObject *parent) : QObject(parent)
 {
 	m_connected = false;
 	m_running = false;
+}
+
+void MessageHandler::message(const QString &msg)
+{
+	msgMutex.lock();
+	messages.push(msg.toStdString());
+	msgMutex.unlock();
+}
+
+void MessageHandler::message(const std::string &msg)
+{
+	msgMutex.lock();
+	messages.push(msg);
+	msgMutex.unlock();
+}
+
+void MessageHandler::message(const char *msg)
+{
+	msgMutex.lock();
+	messages.push(std::string(msg));
+	msgMutex.unlock();
 }
 
 void MessageHandler::connectToLFR(LiveFaceReco *lfr)
@@ -27,15 +50,21 @@ void MessageHandler::run()
 {
 	if (!m_connected)
 		emit askForLFR();
+	QFile f("log.lfr");
+	f.open(QIODevice::WriteOnly);
+	QTextStream s(&f);
+
 	while(m_running)
 	{
 		if (!messages.empty())
 		{
-			emit sendMessage(QString(messages.front().c_str()));
+			s << QString::fromStdString(messages.front());
+			emit sendMessage(QString::fromStdString(messages.front()));
 			messages.pop();
 		}
 		QThread::msleep(10);
 	}
+	f.close();
 	emit finished();
 }
 

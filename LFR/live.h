@@ -1,13 +1,10 @@
-//
-// Created by yuanhao on 20-6-12.
-//
-
 #ifndef LIVE_H
 #define LIVE_H
 #include <opencv2/core/mat.hpp>
 #include "include/ncnn/net.h"
 
-struct ModelConfig {
+struct ModelConfig
+{
 	float scale;
 	float shift_x;
 	float shift_y;
@@ -17,7 +14,9 @@ struct ModelConfig {
 	bool org_resize;
 };
 
-struct LiveFaceBox {
+//прямоугольник обнаруженного лица
+struct LiveFaceBox
+{
 	float x1;
 	float y1;
 	float x2;
@@ -28,7 +27,6 @@ class Live
 {
 public:
 	Live();
-
 	~Live();
 
 	void LoadModel(std::vector<ModelConfig> &configs);

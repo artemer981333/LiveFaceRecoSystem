@@ -18,6 +18,16 @@
     <widget class="QGraphicsView" name="PhotoView"/>
    </item>
    <item>
+    <widget class="QLineEdit" name="FilenameLE">
+     <property name="placeholderText">
+      <string>Name_Surname</string>
+     </property>
+     <property name="clearButtonEnabled">
+      <bool>false</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
     <widget class="QPushButton" name="OKButton">
      <property name="text">
       <string>ОК</string>

@@ -5,6 +5,8 @@
 #include "mainwindow.h"
 #include "videodetectionhandler.h"
 
+using namespace std;
+
 
 LFRManager::LFRManager(QObject *parent) : QObject(parent)
 {
@@ -15,61 +17,89 @@ LFRManager::LFRManager(QObject *parent) : QObject(parent)
 LFRManager::~LFRManager()
 {
 	m_LiveFaceReco->saveTmpInfoToFile("Faces.tmp");
-	for (int i = 0; i < videoThreads.size(); ++i)
+	for (int i = 0; i < streams.size(); ++i)
 	{
-		handlers[i]->setRunning(false);
-		delete receivers[i];
-		delete handlers[i];
-		videoThreads[i]->quit();
-		videoThreads[i]->wait();
-		delete videoThreads[i];
+		deleteVideoSource(i);
 	}
 	delete m_LiveFaceReco;
 }
 
-VideoDetectionHandler *LFRManager::addVideoSource(int cameraIndex)
+int LFRManager::addVideoSource(int cameraIndex)
 {
 	int videoIndex = m_LiveFaceReco->addVideoSource(cameraIndex);
 	if (videoIndex == -1)
-		return nullptr;
-	receivers.append(m_LiveFaceReco->createDetectionReciever(videoIndex));
-	videoThreads.append(new QThread());
-	handlers.append(new VideoDetectionHandler());
-	handlers.back()->connectReciever(receivers.back());
-	handlers.back()->moveToThread(videoThreads.back());
-	connect(videoThreads.back(), &QThread::started, handlers.back(), &VideoDetectionHandler::run);
-	connect(handlers.back(), &VideoDetectionHandler::frameUpdated, (const MainWindow*)this->parent(), &MainWindow::updatePixmap);
-	connect(handlers.back(), &VideoDetectionHandler::personDetected, (const MainWindow*)this->parent(), &MainWindow::updateDetectedPerson);
+		return -1;
+	VideoStream stream;
+	stream.receiver = m_LiveFaceReco->createDetectionReciever(videoIndex);
+	stream.videoThread = new QThread();
+	stream.handler = new VideoDetectionHandler();
+	stream.handler->connectReciever(stream.receiver, videoIndex);
+	stream.handler->moveToThread(stream.videoThread);
+	connect(stream.videoThread, &QThread::started, stream.handler, &VideoDetectionHandler::run);
+	connect(stream.handler, &VideoDetectionHandler::frameUpdated, (const MainWindow*)this->parent(), &MainWindow::updatePixmap);
+	connect(stream.handler, &VideoDetectionHandler::personDetected, (const MainWindow*)this->parent(), &MainWindow::updateDetectedPerson);
 
-	handlers.back()->setRunning(true);
-	videoThreads.back()->start();
-	return handlers.back();
+	stream.handler->setRunning(true);
+	stream.videoThread->start();
+	streams.append(stream);
+	return streams.size() - 1;
 }
 
-void LFRManager::updatePersonalCards(QStringList filenames)
+int LFRManager::addVideoSource(const QString &path)
 {
-	vector<string> vect;
+	int videoIndex = m_LiveFaceReco->addVideoSource(path.toStdString());
+	if (videoIndex == -1)
+		return -1;
+	VideoStream stream;
+	stream.receiver = m_LiveFaceReco->createDetectionReciever(videoIndex);
+	stream.videoThread = new QThread();
+	stream.handler = new VideoDetectionHandler();
+	stream.handler->connectReciever(stream.receiver, videoIndex);
+	stream.handler->moveToThread(stream.videoThread);
+	connect(stream.videoThread, &QThread::started, stream.handler, &VideoDetectionHandler::run);
+	connect(stream.handler, &VideoDetectionHandler::frameUpdated, (const MainWindow*)this->parent(), &MainWindow::updatePixmap);
+	connect(stream.handler, &VideoDetectionHandler::personDetected, (const MainWindow*)this->parent(), &MainWindow::updateDetectedPerson);
+
+	stream.handler->setRunning(true);
+	stream.videoThread->start();
+	streams.append(stream);
+	return streams.size() - 1;
+}
+
+void LFRManager::deleteVideoSource(int index)
+{
+	if (streams[index].handler == nullptr)
+		return;
+	streams[index].handler->setRunning(false);
+	streams[index].videoThread->quit();
+	streams[index].videoThread->wait();
+	m_LiveFaceReco->deleteVideoSource(streams[index].handler->getVideoIndex());
+	delete streams[index].videoThread;
+	delete streams[index].handler;
+	streams[index].handler = nullptr;
+}
+
+VideoDetectionHandler *LFRManager::handlerByIndex(int index)
+{
+	return streams[index].handler;
+}
+
+void LFRManager::updatePersonalCards(const QStringList &filenames, const QList<int> &brightnesCorrs, const QList<int> &contrastCorrs)
+{
+	vector<string> vect1;
 	for (int i = 0; i < filenames.size(); ++i)
-	{
-		vect.push_back(filenames[i].toStdString());
-	}
-	m_LiveFaceReco->updatePersonalInfos(vect);
+		vect1.push_back(filenames.at(i).toStdString());
+	vector<int> vect2 = brightnesCorrs.toVector().toStdVector();
+	vector<int> vect3 = contrastCorrs.toVector().toStdVector();
+//	for (int i = 0; i < filenames.size(); ++i)
+//		vect.push_back(filenames[i].toStdString());
+	m_LiveFaceReco->updatePersonalInfos(vect1, vect2, vect3);
 	m_LiveFaceReco->saveTmpInfoToFile("Faces.tmp");
-}
-
-void LFRManager::addPersonalCard(const QString &filename)
-{
-	m_LiveFaceReco->addPersonalInfo(filename.toStdString());
 }
 
 QString LFRManager::fileNameByID(int id)
 {
 	return QString(m_LiveFaceReco->fileNameByID(id).c_str());
-}
-
-void LFRManager::addVideoSource(const QString &path)
-{
-
 }
 
 void LFRManager::askForLFR()

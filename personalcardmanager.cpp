@@ -72,6 +72,8 @@ void PersonalCardManager::loadCards(const QString &filename)
 		card.lastname = obj.take("lastname").toString();
 		card.post = obj.take("post").toString();
 		card.subdivision = obj.take("subdivision").toString();
+		card.brightnessCorrection = obj.take("brightness").toInt();
+		card.contrastCorrection = obj.take("contrast").toInt();
 		cards.append(card);
 	}
 }
@@ -90,6 +92,8 @@ void PersonalCardManager::saveCards(const QString &filename)
 		obj.insert("lastname", cards[i].lastname);
 		obj.insert("post", cards[i].post);
 		obj.insert("subdivision", cards[i].subdivision);
+		obj.insert("brightness", cards[i].brightnessCorrection);
+		obj.insert("contrast", cards[i].contrastCorrection);
 		arr.append(obj);
 	}
 	doc.setArray(arr);

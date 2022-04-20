@@ -7,17 +7,14 @@
 #include "include/ncnn/net.h"
 #include <opencv2/highgui.hpp>
 
-using namespace std;
-
-//ncnn::Mat preprocess(ncnn::Mat img, FaceInfo info);
-
+//Расчет схожести данных о лицах
 float calcSimilar(std::vector<float> feature1, std::vector<float> feature2);
 
-
-class Arcface {
+class Arcface
+{
 
 public:
-    Arcface(string model_folder = ".");
+	Arcface();
     ~Arcface();
     cv::Mat getFeature(cv::Mat img);
 
@@ -26,7 +23,7 @@ private:
 
     const int feature_dim = 128;
 
-    void normalize(vector<float> &feature);
+	void normalize(std::vector<float> &feature);
 };
 
 #endif

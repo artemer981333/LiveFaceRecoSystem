@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>Редактор персональных карт</string>
   </property>
   <property name="autoFillBackground">
    <bool>false</bool>
@@ -52,7 +52,7 @@
        <item>
         <widget class="QTabWidget" name="tabWidget">
          <property name="currentIndex">
-          <number>2</number>
+          <number>1</number>
          </property>
          <widget class="QWidget" name="ViewTab">
           <attribute name="title">
@@ -129,6 +129,9 @@
              </property>
              <property name="scaledContents">
               <bool>false</bool>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
              </property>
              <property name="textInteractionFlags">
               <set>Qt::NoTextInteraction</set>
@@ -246,9 +249,45 @@
             </widget>
            </item>
            <item>
+            <widget class="QSlider" name="EditBrightnessSlider">
+             <property name="minimum">
+              <number>-200</number>
+             </property>
+             <property name="maximum">
+              <number>200</number>
+             </property>
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QSlider" name="EditContrastSlider">
+             <property name="minimum">
+              <number>1</number>
+             </property>
+             <property name="maximum">
+              <number>400</number>
+             </property>
+             <property name="value">
+              <number>100</number>
+             </property>
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+            </widget>
+           </item>
+           <item>
             <widget class="QPushButton" name="EditCardButton">
              <property name="text">
               <string>Редактировать</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="DeleteCardButton">
+             <property name="text">
+              <string>Удалить</string>
              </property>
             </widget>
            </item>
@@ -272,6 +311,13 @@
            <string>Добавление</string>
           </attribute>
           <layout class="QVBoxLayout" name="verticalLayout_5">
+           <item>
+            <widget class="QPushButton" name="ClearButton">
+             <property name="text">
+              <string>Очистить</string>
+             </property>
+            </widget>
+           </item>
            <item>
             <widget class="QLabel" name="label_35">
              <property name="text">
@@ -359,6 +405,35 @@
              </property>
              <property name="textInteractionFlags">
               <set>Qt::NoTextInteraction</set>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QSlider" name="AddBrightnessSlider">
+             <property name="minimum">
+              <number>-200</number>
+             </property>
+             <property name="maximum">
+              <number>200</number>
+             </property>
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QSlider" name="AddContrastSlider">
+             <property name="minimum">
+              <number>1</number>
+             </property>
+             <property name="maximum">
+              <number>400</number>
+             </property>
+             <property name="value">
+              <number>100</number>
+             </property>
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
              </property>
             </widget>
            </item>

@@ -5,6 +5,9 @@
 #include <QFileDialog>
 #include <QRegExp>
 #include <iostream>
+#include "LFR/livefacereco.hpp"
+
+using namespace cv;
 
 PersonalCardEditorForm::PersonalCardEditorForm(QWidget *parent) :
 	QWidget(parent),
@@ -42,7 +45,7 @@ void PersonalCardEditorForm::showEvent(QShowEvent *event)
 
 void PersonalCardEditorForm::on_AddCardButton_clicked()
 {
-	if (QMessageBox::StandardButton::Cancel == QMessageBox::question(this, "Подтверждение добавления", "Вы действительно хотите добавить данную карточку?"))
+	if (QMessageBox::StandardButton::Yes != QMessageBox::question(this, "Подтверждение добавления", "Вы действительно хотите добавить данную карточку?"))
 		return;
 	PersonalCard card;
 	card.surname = ui->AddSurnameLE->text();
@@ -52,6 +55,8 @@ void PersonalCardEditorForm::on_AddCardButton_clicked()
 	card.subdivision = ui->AddSubdivisionLE->text();
 	card.imagePath = ui->AddImagePathLE->text();
 	card.id = QUuid::createUuid();
+	card.brightnessCorrection = ui->AddBrightnessSlider->value();
+	card.contrastCorrection = ui->AddContrastSlider->value();
 	newCardList.append(card);
 	cardList.append(newCardList.back().surname + " " + newCardList.back().name + " " + newCardList.back().lastname);
 	updateCardListModel(cardList);
@@ -59,7 +64,7 @@ void PersonalCardEditorForm::on_AddCardButton_clicked()
 
 void PersonalCardEditorForm::on_EditCardButton_clicked()
 {
-	if (QMessageBox::StandardButton::Cancel == QMessageBox::question(this, "Подтверждение редактирования", "Вы действительно хотите редактировать данную карточку?"))
+	if (QMessageBox::StandardButton::Yes != QMessageBox::question(this, "Подтверждение редактирования", "Вы действительно хотите редактировать данную карточку?"))
 		return;
 	PersonalCard &editingCard = newCardList[ui->CardView->currentIndex().row()];
 	editingCard.imagePath = ui->EditImagePathLE->text();
@@ -68,8 +73,21 @@ void PersonalCardEditorForm::on_EditCardButton_clicked()
 	editingCard.post = ui->EditPostLE->text();
 	editingCard.subdivision = ui->EditSubdivisionLE->text();
 	editingCard.surname = ui->EditSurnameLE->text();
-	cardList[ui->CardView->currentIndex().row()] = newCardList.back().surname + " " + newCardList.back().name + " " + newCardList.back().lastname;
+	editingCard.brightnessCorrection = ui->EditBrightnessSlider->value();
+	editingCard.contrastCorrection = ui->EditContrastSlider->value();
+	cardList[ui->CardView->currentIndex().row()] = editingCard.surname + " " + editingCard.name + " " + editingCard.lastname;
 	updateCardListModel(cardList);
+
+	ui->ViewSurnameLE->setText(editingCard.surname);
+	ui->ViewNameLE->setText(editingCard.name);
+	ui->ViewLastnameLE->setText(editingCard.lastname);
+	ui->ViewPostLE->setText(editingCard.post);
+	ui->ViewSubdivisionLE->setText(editingCard.subdivision);
+	ui->ViewImagePathLE->setText(editingCard.imagePath);
+	cv::Mat tmp;
+	editPic.convertTo(tmp, -1, ui->EditContrastSlider->value() / 100.0, ui->EditBrightnessSlider->value());
+	QPixmap pixmap = QPixmap::fromImage(QImage(tmp.data, tmp.cols, tmp.rows, tmp.step, QImage::Format_RGB888).rgbSwapped());
+	ui->label_13->setPixmap(pixmap);
 }
 
 void PersonalCardEditorForm::on_SearchLE_textChanged(const QString &arg1)
@@ -83,17 +101,79 @@ void PersonalCardEditorForm::on_SearchLE_textChanged(const QString &arg1)
 
 void PersonalCardEditorForm::on_OKButton_clicked()
 {
-	if (QMessageBox::StandardButton::Cancel == QMessageBox::question(this, "Подтверждение изменений", "Вы действительно хотите внести сделанные изменения?"))
+	if (QMessageBox::StandardButton::Yes != QMessageBox::question(this, "Подтверждение изменений", "Вы действительно хотите внести сделанные изменения?"))
 		return;
-	updateCardList(newCardList);
+	emit updateCardList(newCardList);
 	this->close();
 }
 
 void PersonalCardEditorForm::on_CancelButton_clicked()
 {
-	if (QMessageBox::StandardButton::Cancel == QMessageBox::question(this, "Подтверждение отмены изменений", "Вы действительно хотите отменить сделанные изменения?"))
+	if (QMessageBox::StandardButton::Yes != QMessageBox::question(this, "Подтверждение отмены изменений", "Вы действительно хотите отменить сделанные изменения?"))
 		return;
 	this->close();
+}
+
+void PersonalCardEditorForm::on_AddSelectImageButton_clicked()
+{
+	QString selfilter = tr("JPEG (*.jpg *.jpeg)");
+	QString fileName = QFileDialog::getOpenFileName(
+			this,
+			"Выбор файла",
+			"./img/",
+			tr("All files (*.*);;JPEG (*.jpg *.jpeg);;TIFF (*.tif)" ),
+			&selfilter
+	);
+	ui->AddBrightnessSlider->setEnabled(true);
+	ui->AddContrastSlider->setEnabled(true);
+	addPic = cv::imread(fileName.toStdString());
+	cv::Mat tmp;
+	addPic.convertTo(tmp, -1, ui->AddContrastSlider->value() / 100.0, ui->AddBrightnessSlider->value());
+	QPixmap pixmap = QPixmap::fromImage(QImage(tmp.data, tmp.cols, tmp.rows, tmp.step, QImage::Format_RGB888).rgbSwapped());
+	ui->label_32->setPixmap(pixmap);
+	ui->AddImagePathLE->setText(fileName.split("/").back());
+}
+
+void PersonalCardEditorForm::on_EditSelectImageButton_clicked()
+{
+	QString selfilter = tr("JPEG (*.jpg *.jpeg)");
+	QString fileName = QFileDialog::getOpenFileName(
+			this,
+			"Выбор файла",
+			"./img/",
+			tr("All files (*.*);;JPEG (*.jpg *.jpeg);;TIFF (*.tif)" ),
+			&selfilter
+	);
+	ui->EditBrightnessSlider->setEnabled(true);
+	ui->EditContrastSlider->setEnabled(true);
+	editPic = cv::imread(fileName.toStdString());
+	cv::Mat tmp;
+	editPic.convertTo(tmp, -1, ui->EditContrastSlider->value() / 100.0, ui->EditBrightnessSlider->value());
+	QPixmap pixmap = QPixmap::fromImage(QImage(tmp.data, tmp.cols, tmp.rows, tmp.step, QImage::Format_RGB888).rgbSwapped());
+	ui->label_27->setPixmap(pixmap);
+	ui->EditImagePathLE->setText(fileName.split("/").back());
+}
+
+void PersonalCardEditorForm::on_DeleteCardButton_clicked()
+{
+	if (QMessageBox::StandardButton::Yes != QMessageBox::question(this, "Подтверждение удаления", "Вы действительно хотите удалить данную карточку?"))
+		return;
+	newCardList.erase(newCardList.begin() + ui->CardView->currentIndex().row());
+	cardList.erase(cardList.begin() + ui->CardView->currentIndex().row());
+	updateCardListModel(cardList);
+}
+
+void PersonalCardEditorForm::on_ClearButton_clicked()
+{
+	ui->AddSurnameLE->clear();
+	ui->AddNameLE->clear();
+	ui->AddLastnameLE->clear();
+	ui->AddPostLE->clear();
+	ui->AddSubdivisionLE->clear();
+	ui->AddImagePathLE->clear();
+	ui->label_32->clear();
+	ui->AddBrightnessSlider->setEnabled(false);
+	ui->AddContrastSlider->setEnabled(false);
 }
 
 void PersonalCardEditorForm::on_CardView_clicked(const QModelIndex &index)
@@ -105,7 +185,10 @@ void PersonalCardEditorForm::on_CardView_clicked(const QModelIndex &index)
 	ui->ViewPostLE->setText(card.post);
 	ui->ViewSubdivisionLE->setText(card.subdivision);
 	ui->ViewImagePathLE->setText(card.imagePath);
-	QPixmap pixmap(card.imagePath);
+	editPic = cv::imread("./img/" + card.imagePath.toStdString());
+	cv::Mat tmp;
+	editPic.convertTo(tmp, -1, card.contrastCorrection / 100.0, card.brightnessCorrection);
+	QPixmap pixmap = QPixmap::fromImage(QImage(tmp.data, tmp.cols, tmp.rows, tmp.step, QImage::Format_RGB888).rgbSwapped());
 	ui->label_13->setPixmap(pixmap);
 
 	ui->EditSurnameLE->setText(card.surname);
@@ -114,35 +197,39 @@ void PersonalCardEditorForm::on_CardView_clicked(const QModelIndex &index)
 	ui->EditPostLE->setText(card.post);
 	ui->EditSubdivisionLE->setText(card.subdivision);
 	ui->EditImagePathLE->setText(card.imagePath);
+	ui->EditBrightnessSlider->setValue(card.brightnessCorrection);
+	ui->EditContrastSlider->setValue(card.contrastCorrection);
 	ui->label_27->setPixmap(pixmap);
 }
 
-void PersonalCardEditorForm::on_AddSelectImageButton_clicked()
+void PersonalCardEditorForm::on_EditBrightnessSlider_actionTriggered(int action)
 {
-	QString selfilter = tr("JPEG (*.jpg *.jpeg)");
-	QString fileName = QFileDialog::getOpenFileName(
-			this,
-			"Выбор файла",
-			"./",
-			tr("All files (*.*);;JPEG (*.jpg *.jpeg);;TIFF (*.tif)" ),
-			&selfilter
-	);
-	ui->AddImagePathLE->setText(fileName);
-	QPixmap pixmap(fileName);
+	cv::Mat tmp;
+	editPic.convertTo(tmp, -1, ui->EditContrastSlider->value() / 100.0, ui->EditBrightnessSlider->value());
+	QPixmap pixmap = QPixmap::fromImage(QImage(tmp.data, tmp.cols, tmp.rows, tmp.step, QImage::Format_RGB888).rgbSwapped());
+	ui->label_27->setPixmap(pixmap);
+}
+
+void PersonalCardEditorForm::on_EditContrastSlider_actionTriggered(int action)
+{
+	cv::Mat tmp;
+	editPic.convertTo(tmp, -1, ui->EditContrastSlider->value() / 100.0, ui->EditBrightnessSlider->value());
+	QPixmap pixmap = QPixmap::fromImage(QImage(tmp.data, tmp.cols, tmp.rows, tmp.step, QImage::Format_RGB888).rgbSwapped());
+	ui->label_27->setPixmap(pixmap);
+}
+
+void PersonalCardEditorForm::on_AddBrightnessSlider_actionTriggered(int action)
+{
+	cv::Mat tmp;
+	addPic.convertTo(tmp, -1, ui->AddContrastSlider->value() / 100.0, ui->AddBrightnessSlider->value());
+	QPixmap pixmap = QPixmap::fromImage(QImage(tmp.data, tmp.cols, tmp.rows, tmp.step, QImage::Format_RGB888).rgbSwapped());
 	ui->label_32->setPixmap(pixmap);
 }
 
-void PersonalCardEditorForm::on_EditSelectImageButton_clicked()
+void PersonalCardEditorForm::on_AddContrastSlider_actionTriggered(int action)
 {
-	QString selfilter = tr("JPEG (*.jpg *.jpeg)");
-	QString fileName = QFileDialog::getOpenFileName(
-			this,
-			"Выбор файла",
-			"./",
-			tr("All files (*.*);;JPEG (*.jpg *.jpeg);;TIFF (*.tif)" ),
-			&selfilter
-	);
-	ui->EditImagePathLE->setText(fileName);
-	QPixmap pixmap(fileName);
-	ui->label_27->setPixmap(pixmap);
+	cv::Mat tmp;
+	addPic.convertTo(tmp, -1, ui->AddContrastSlider->value() / 100.0, ui->AddBrightnessSlider->value());
+	QPixmap pixmap = QPixmap::fromImage(QImage(tmp.data, tmp.cols, tmp.rows, tmp.step, QImage::Format_RGB888).rgbSwapped());
+	ui->label_32->setPixmap(pixmap);
 }
