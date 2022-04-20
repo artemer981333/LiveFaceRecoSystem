@@ -1,0 +1,156 @@
+[
+    {
+        "brightness": -46,
+        "contrast": 89,
+        "id": "{646f17a7-b50c-4fd2-9098-87b5fe0695fa}",
+        "imagePath": "Ivan_Reva.jpg",
+        "lastname": "Леонидович",
+        "name": "Иван",
+        "post": "Декан",
+        "subdivision": "АВТФ",
+        "surname": "Рева"
+    },
+    {
+        "brightness": -38,
+        "contrast": 92,
+        "id": "{a3efb623-442a-4baa-a206-bbb837dce5d3}",
+        "imagePath": "Ivan_Tomilov.jpg",
+        "lastname": "Николаевич",
+        "name": "Иван",
+        "post": "Проректор по цифровизации",
+        "subdivision": "НГТУ",
+        "surname": "Томилов"
+    },
+    {
+        "brightness": -49,
+        "contrast": 121,
+        "id": "{4e07b9c0-5b68-47b2-9f17-3dcaf8986adf}",
+        "imagePath": "Artem_Amelchenko.jpg",
+        "lastname": "Олегович",
+        "name": "Артем",
+        "post": "Студент",
+        "subdivision": "НГТУ",
+        "surname": "Амельченко"
+    },
+    {
+        "brightness": -13,
+        "contrast": 125,
+        "id": "{1e679e87-67dd-4079-8320-70b25b683e77}",
+        "imagePath": "Egor_Bukhamer.jpg",
+        "lastname": "Андреевич",
+        "name": "Егор",
+        "post": "Аспирант",
+        "subdivision": "АСУ",
+        "surname": "Бухамер"
+    },
+    {
+        "brightness": -54,
+        "contrast": 86,
+        "id": "{db0b9018-178b-4a55-bf6f-22891fdd78c3}",
+        "imagePath": "Dostovalov_Dmitry.jpg",
+        "lastname": "Николаевич",
+        "name": "Дмитрий",
+        "post": "Лайк",
+        "subdivision": "АСУ",
+        "surname": "Достовалов"
+    },
+    {
+        "brightness": -38,
+        "contrast": 88,
+        "id": "{c0498399-f83e-435f-b9b1-b07a80fc13b7}",
+        "imagePath": "Aydagulov_Valeriy.jpg",
+        "lastname": "Ирикович",
+        "name": "Валерий",
+        "post": "Начальник",
+        "subdivision": "Элтекс",
+        "surname": "Айдагулов"
+    },
+    {
+        "brightness": -33,
+        "contrast": 89,
+        "id": "{9f77010a-2a05-4829-a1dc-7afcef0f53a3}",
+        "imagePath": "Anatoly_Bataev.jpg",
+        "lastname": "Андреевич",
+        "name": "Анатолий",
+        "post": "Ректор",
+        "subdivision": "НГТУ",
+        "surname": "Батаев"
+    },
+    {
+        "brightness": -31,
+        "contrast": 82,
+        "id": "{303caad5-c6ab-4922-beb9-bea03375cf92}",
+        "imagePath": "Vasiliy_Yanpolsky.jpg",
+        "lastname": "Васильевич",
+        "name": "Василий",
+        "post": "Первый проректор",
+        "subdivision": "НГТУ",
+        "surname": "Янпольский"
+    },
+    {
+        "brightness": -42,
+        "contrast": 88,
+        "id": "{fef019ad-2255-4edb-a825-e2124705da07}",
+        "imagePath": "Sergey_Chernov.jpg",
+        "lastname": "Сергеевич",
+        "name": "Сергей",
+        "post": "Проректор по учебной работе",
+        "subdivision": "НГТУ",
+        "surname": "Чернов"
+    },
+    {
+        "brightness": -109,
+        "contrast": 125,
+        "id": "{13829919-9753-4e7f-bdff-b2085a9088ce}",
+        "imagePath": "Sergey_Brovanov.jpg",
+        "lastname": "Викторович",
+        "name": "Сергей",
+        "post": "Проректор по научной работе",
+        "subdivision": "НГТУ",
+        "surname": "Брованов"
+    },
+    {
+        "brightness": -88,
+        "contrast": 108,
+        "id": "{0e67eaff-1efc-4500-8817-bc33119840d6}",
+        "imagePath": "Marina_Khairulina.jpg",
+        "lastname": "Валентиновна",
+        "name": "Марина",
+        "post": "Проректор по инновациям",
+        "subdivision": "НГТУ",
+        "surname": "Хайрулина"
+    },
+    {
+        "brightness": -69,
+        "contrast": 95,
+        "id": "{e3064034-d4c6-4c75-81a0-4d79ce498906}",
+        "imagePath": "Vadim_Nekrasov.jpg",
+        "lastname": "Владимирович",
+        "name": "Вадим",
+        "post": "Проректор по международным связям",
+        "subdivision": "НГТУ",
+        "surname": "Некрасов"
+    },
+    {
+        "brightness": -50,
+        "contrast": 89,
+        "id": "{daec58c0-c03c-441a-868c-35f81f0cfa73}",
+        "imagePath": "Vadim_Mavlukeev.jpg",
+        "lastname": "Ренатович",
+        "name": "Вадим",
+        "post": "Главный бухгалтер",
+        "subdivision": "Бухгалтерия",
+        "surname": "Мавлюкеев"
+    },
+    {
+        "brightness": -42,
+        "contrast": 87,
+        "id": "{00b9f406-4795-4936-88a7-c2dc72fb89a8}",
+        "imagePath": "Andrey_Rybalko.jpg",
+        "lastname": "Иванович",
+        "name": "Андрей",
+        "post": "Проректор",
+        "subdivision": "НГТУ",
+        "surname": "Рыбалко"
+    }
+]
