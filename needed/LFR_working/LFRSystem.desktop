@@ -1,9 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=LFR
-GenericName=LFR
-Comment=LFR
-Exec=bash /home/artem/LFR_working/LFR.sh
-Icon=  /home/artem/LFR_working/LFRicon.png
-Terminal=LFR
-Categories=LFR 
