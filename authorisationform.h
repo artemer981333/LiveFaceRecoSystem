@@ -15,6 +15,10 @@ public:
 	explicit AuthorisationForm(QWidget *parent = 0);
 	~AuthorisationForm();
 
+	bool auth;
+
+	void authorisation();
+
 signals:
 	void authorised(QString login);
 

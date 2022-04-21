@@ -36,7 +36,7 @@ public:
 	{
 		Passed,
 		ZoneViolation,
-		Fake,
+		Fake
 	};
 
 	struct ShowingCard

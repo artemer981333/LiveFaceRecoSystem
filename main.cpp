@@ -81,10 +81,10 @@ int main(int argc, char *argv[])
 	style.close();
 
 	AuthorisationForm authForm;
-	authForm.show();
 
     MainWindow w;
 	QApplication::connect(&authForm, &AuthorisationForm::authorised, &w, &MainWindow::onAuthorised);
+	authForm.authorisation();
 	w.setLicenseDate(date);
 	//w.show();
 

@@ -102,7 +102,7 @@ class MainWindow : public QMainWindow
 	QDate licenseDate;
 
 	//добавление камеры с уже созданным видеопотоком, имеющим данный id
-	void addCameraSource(int index, QString name, bool enterance, QUuid releID);
+	void addCameraSource(int index, QString name, bool enterance, QUuid releID, bool showingMessage = true);
 
 public:
 	explicit MainWindow(QWidget *parent = 0);

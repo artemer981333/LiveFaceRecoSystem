@@ -12,11 +12,12 @@ Q_DECLARE_METATYPE(cv::Mat)
 Q_DECLARE_METATYPE(cv::Point)
 Q_DECLARE_METATYPE(DrawInfo)
 
-void MainWindow::addCameraSource(int index, QString name, bool enterance, QUuid releID)
+void MainWindow::addCameraSource(int index, QString name, bool enterance, QUuid releID, bool showingMessage)
 {
 	if (index == -1)
 	{
-		QMessageBox::information(this, "Can't connect camera", "Chosen camera can not be conected");
+		if (showingMessage)
+			QMessageBox::information(this, "Невозможно подключить камеру", "Невозможно подключить камеру");
 		return;
 	}
 	videoSourcesNumber++;
@@ -158,10 +159,10 @@ void MainWindow::loadConfig()
 			index = m_LFRManager->addVideoSource(config.cameras[i].rtspConnectionAddres);
 		if (index == -1)
 		{
-			QMessageBox::information(this, "Can't connect camera", "Chosen camera can not be conected");
+			//log
 			continue;
 		}
-		addCameraSource(index, config.cameras[i].name, config.cameras[i].enterance, config.cameras[i].releID);
+		addCameraSource(index, config.cameras[i].name, config.cameras[i].enterance, config.cameras[i].releID, false);
 		config.cameras[i].id = index;
 	}
 	devicesManager.updateDevices(config.reles);

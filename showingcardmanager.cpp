@@ -157,6 +157,18 @@ QString ShowingCardManager::ShowingCard::dt()
 	QString ret = "";
 	ret += date.toString("dd.MM.yyyy") + " ";
 	ret += time.toString("hh.mm.ss");
+	switch (status)
+	{
+		case PassingStatus::Passed:
+			ret += " OK";
+			break;
+		case PassingStatus::ZoneViolation:
+			ret += " ЗОН";
+			break;
+		case PassingStatus::Fake:
+			ret += " СПУФ";
+			break;
+	}
 	return ret;
 }
 
