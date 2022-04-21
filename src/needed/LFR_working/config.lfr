@@ -1,0 +1,18 @@
+2
+1
+Shtativ
+null
+1
+{fe46fe72-019c-49be-a917-4d065f254a22}
+0
+iqos
+null
+0
+{7696a716-2931-49ef-b056-38d9d749d9f1}
+2
+{fe46fe72-019c-49be-a917-4d065f254a22}
+rele1
+curl 172.16.4.90/open1
+{7696a716-2931-49ef-b056-38d9d749d9f1}
+rele2
+curl 172.16.4.90/open2
