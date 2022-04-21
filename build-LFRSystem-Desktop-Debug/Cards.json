@@ -1,0 +1,56 @@
+[
+    {
+        "id": "{646f17a7-b50c-4fd2-9098-87b5fe0695fa}",
+        "imagePath": "Ivan_Reva.jpg",
+        "lastname": "Леонидович",
+        "name": "Иван",
+        "post": "Декан",
+        "subdivision": "АВТФ",
+        "surname": "Рева"
+    },
+    {
+        "id": "{a3efb623-442a-4baa-a206-bbb837dce5d3}",
+        "imagePath": "Ivan_Tomilov.jpg",
+        "lastname": "Николаевич",
+        "name": "Иван",
+        "post": "Всеумеющий",
+        "subdivision": "Элтекс",
+        "surname": "Томилов"
+    },
+    {
+        "id": "{4e07b9c0-5b68-47b2-9f17-3dcaf8986adf}",
+        "imagePath": "Artem_Amelchenko.jpg",
+        "lastname": "Артем",
+        "name": "Артем",
+        "post": "Артем",
+        "subdivision": "Артем",
+        "surname": "Артем"
+    },
+    {
+        "id": "{1e679e87-67dd-4079-8320-70b25b683e77}",
+        "imagePath": "Egor_Bukhamer.jpg",
+        "lastname": "Андреевич",
+        "name": "Егор",
+        "post": "Аспирант",
+        "subdivision": "АСУ",
+        "surname": "Бухамер"
+    },
+    {
+        "id": "{3a297120-20a9-4c22-bd08-53cd01c4eccf}",
+        "imagePath": "Dostovalov_Dmitry.jpg",
+        "lastname": "Николаевич",
+        "name": "Дмитрий",
+        "post": "Зав",
+        "subdivision": "НГТУ",
+        "surname": "Достовалов"
+    },
+    {
+        "id": "{f1c1bb9b-1d4f-49b8-9d3a-d6c2e9bcea93}",
+        "imagePath": "Katya.jpg",
+        "lastname": "Катя",
+        "name": "Катя",
+        "post": "Катя",
+        "subdivision": "Катя",
+        "surname": "Катя"
+    }
+]
