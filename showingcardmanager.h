@@ -1,16 +1,19 @@
 #ifndef CARDLAYOUTMANAGER_H
 #define CARDLAYOUTMANAGER_H
 
+#include <QObject>
 #include <QDate>
 #include <QTime>
 #include <QQueue>
 #include <QPixmap>
 #include "devicesmanager.h"
 #include "personalcardmanager.h"
+#include "connectiontoserver.h"
 
 //классс менеджера отображающихся карт (получает идентифицированного человека и решает, добавить его в список пришедших или нет)
-class ShowingCardManager
+class ShowingCardManager : public QObject
 {
+	Q_OBJECT
 
 	int showingCardsNumber;
 	int enteredNumber;
@@ -73,7 +76,7 @@ public:
 		QList<Visit> visits;
 	};
 
-	ShowingCardManager();
+	ShowingCardManager(QObject *parent = nullptr);
 
 	void setShowingCardsNumber(int number);
 
@@ -92,6 +95,11 @@ private:
 
 	QQueue<ShowingCard> cards;
 	QList<PersonalVisits> personalsVisits;
+
+signals:
+
+	void newPassingEvent(PassingEvent pe);
+
 };
 
 #endif // CARDLAYOUTMANAGER_H

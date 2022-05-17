@@ -21,6 +21,7 @@
 #include "showingcardmanager.h"
 #include "devicesmanager.h"
 #include "devicecontrolform.h"
+#include "connectiontoserver.h"
 
 #include "opencv2/opencv.hpp"
 
@@ -52,6 +53,9 @@ class MainWindow : public QMainWindow
 	ShowingCardManager showingCardManager;
 
 	DevicesManager devicesManager;
+
+	ConnectionToServer *connection;
+	QThread connectionThread;
 
 	//количество видеопотоков
 	int videoSourcesNumber;
@@ -126,6 +130,12 @@ signals:
 	void setBrightnessCorrection(int corr);
 	void setContrastCorrection(int corr);
 
+	//connection Signals
+	void personalCardAdded(PersonalCard card);
+	void personalCardEdited(PersonalCard card);
+	void personalCardDeleted(PersonalCard card);
+	void newPassingEvent(PassingEvent pe);
+
 public slots:
 	void onAuthorised(QString login);
 	void updatePixmap(VideoDetectionHandler::VideoDisplay *videoDisplay, cv::Mat frame, DrawInfo info);
@@ -136,6 +146,11 @@ public slots:
 	void addCameraSourceByIndex(int sourceIndex, QString name, bool enterance, QUuid releID);
 	void addCameraSourceByPath(const QString &path, QString name, bool enterance, QUuid releID);
 	void deleteVideoSource(int index);
+
+	//connection Slots
+	void addPersonalCard(PersonalCard card);
+	void editPersonalCard(PersonalCard card);
+	void deletePersonalCard(PersonalCard card);
 
 private slots:
 	void on_OpenPersonalCardEditor_triggered();

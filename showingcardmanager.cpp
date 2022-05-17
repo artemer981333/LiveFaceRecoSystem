@@ -4,7 +4,7 @@
 
 using namespace std;
 
-ShowingCardManager::ShowingCardManager()
+ShowingCardManager::ShowingCardManager(QObject *parent): QObject(parent)
 {
 	showingCardsNumber = 5;
 	enteredNumber = 0;
@@ -77,7 +77,15 @@ ShowingCardManager::DetectionResult ShowingCardManager::personDetected(QUuid id,
 			}
 			personalVisits->visits.append(Visit(enterance));
 			if (rele != reles.end())
+			{
 				devicesManager->activateRele(rele->id);
+				PassingEvent pe;
+				pe.id = id;
+				pe.enterance = enterance;
+				pe.passed = true;
+				pe.time = QDateTime::currentDateTime();
+				emit newPassingEvent(pe);
+			}
 		}
 		if (newCard)
 		{

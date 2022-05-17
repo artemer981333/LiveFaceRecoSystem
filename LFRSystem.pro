@@ -41,7 +41,8 @@ SOURCES += \
     showingcardmanager.cpp \
     authorisationform.cpp \
     devicecontrolform.cpp \
-    devicesmanager.cpp
+    devicesmanager.cpp \
+    connectiontoserver.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -60,7 +61,8 @@ HEADERS += \
     showingcardmanager.h \
     authorisationform.h \
     devicecontrolform.h \
-    devicesmanager.h
+    devicesmanager.h \
+    connectiontoserver.h
 
 FORMS += \
         mainwindow.ui \

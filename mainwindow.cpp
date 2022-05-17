@@ -141,9 +141,25 @@ void MainWindow::init()
 	deviceControlForm->connectDevicesManager(&devicesManager);
 	connect(deviceControlForm, &DeviceControlForm::relesListUpdated, this, &MainWindow::updateReles);
 
+	connect(&showingCardManager, &ShowingCardManager::newPassingEvent, this, &MainWindow::newPassingEvent);
 	showingCardManager.connectDevicesManager(&devicesManager);
 
 	loadConfig();
+
+	connection = new ConnectionToServer();
+
+	connect(connection, &ConnectionToServer::personalCardAdded, this, &MainWindow::addPersonalCard);
+	connect(connection, &ConnectionToServer::personalCardEdited, this, &MainWindow::editPersonalCard);
+	connect(connection, &ConnectionToServer::personalCardDeleted, this, &MainWindow::deletePersonalCard);
+
+	connect(this, &MainWindow::personalCardAdded, connection, &ConnectionToServer::addPersonalCard);
+	connect(this, &MainWindow::personalCardEdited, connection, &ConnectionToServer::editPersonalCard);
+	connect(this, &MainWindow::personalCardDeleted, connection, &ConnectionToServer::deletePersonalCard);
+
+	connection->connect("172.16.4.184", "8080");
+	connection->moveToThread(&connectionThread);
+	connection->run();
+	cout << "RUNNING" << endl;
 }
 
 void MainWindow::loadConfig()
@@ -336,6 +352,21 @@ void MainWindow::deleteVideoSource(int index)
 		if (config.cameras[i].id == index)
 			config.cameras.removeAt(i);
 	videoSourcesNumber--;
+}
+
+void MainWindow::addPersonalCard(PersonalCard card)
+{
+
+}
+
+void MainWindow::editPersonalCard(PersonalCard card)
+{
+
+}
+
+void MainWindow::deletePersonalCard(PersonalCard card)
+{
+
 }
 
 MainWindow::~MainWindow()
