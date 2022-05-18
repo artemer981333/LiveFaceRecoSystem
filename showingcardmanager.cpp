@@ -84,6 +84,7 @@ ShowingCardManager::DetectionResult ShowingCardManager::personDetected(QUuid id,
 				pe.enterance = enterance;
 				pe.passed = true;
 				pe.time = QDateTime::currentDateTime();
+				cout << "SCM emiting !!!!!!!!!!!!!!!!!" << endl;
 				emit newPassingEvent(pe);
 			}
 		}

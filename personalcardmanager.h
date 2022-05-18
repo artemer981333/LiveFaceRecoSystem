@@ -13,6 +13,9 @@ struct PersonalCard
 	QString name, surname, lastname;
 	QString post, subdivision;
 	int brightnessCorrection, contrastCorrection;
+
+	bool operator == (const PersonalCard &other) const;
+	bool operator != (const PersonalCard &other) const;
 };
 
 //класс менеджера персональных карт
@@ -34,12 +37,18 @@ public:
 	void loadCards(const QString &filename);
 	void saveCards(const QString &filename);
 
-	void updateCards(const QList<PersonalCard> &newCards);
 
 signals:
+	void personalCardAdded(PersonalCard card);
+	void personalCardEdited(PersonalCard card);
+	void personalCardDeleted(PersonalCard card);
 
 public slots:
+	void personalCardAddedSlot(PersonalCard card);
+	void personalCardEditedSlot(PersonalCard card);
+	void personalCardDeletedSlot(PersonalCard card);
 
+	void updateCards(QList<PersonalCard> newCards);
 
 };
 

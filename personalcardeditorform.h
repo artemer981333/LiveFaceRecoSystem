@@ -31,7 +31,7 @@ public:
 	void connectCardManager(PersonalCardManager *manager);
 
 signals:
-	void updateCardList(const QList<PersonalCard> &cards);
+	void updateCardList(QList<PersonalCard> cards);
 
 public slots:
 	void showEvent(QShowEvent *event);

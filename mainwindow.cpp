@@ -11,6 +11,7 @@ using namespace std;
 Q_DECLARE_METATYPE(cv::Mat)
 Q_DECLARE_METATYPE(cv::Point)
 Q_DECLARE_METATYPE(DrawInfo)
+Q_DECLARE_METATYPE(PassingEvent)
 
 void MainWindow::addCameraSource(int index, QString name, bool enterance, QUuid releID, bool showingMessage)
 {
@@ -60,15 +61,18 @@ void MainWindow::closeEvent(QCloseEvent* event)
 
 void MainWindow::init()
 {
+	//регистрация типов для сигналов/слотов
 	qRegisterMetaType<cv::Mat>();
 	qRegisterMetaType<cv::Point>();
 	qRegisterMetaType<DrawInfo>();
+	qRegisterMetaType<PassingEvent>();
 
 	videoSourcesNumber = 0;
 	ui->setupUi(this);
 	ui->LicenseLabel->setText("Лицензия действительна до " + licenseDate.toString("dd.MM.yyyy"));
 
 
+	//помещение элементов для отображения карт в массивы
 	{
 		imageLabels.append(ui->CardPic1);
 		imageLabels.append(ui->CardPic2);
@@ -126,8 +130,11 @@ void MainWindow::init()
 	cardManager = new PersonalCardManager;
 
 	cardEditForm = new PersonalCardEditorForm;
+	connect(cardEditForm, &PersonalCardEditorForm::updateCardList, cardManager, &PersonalCardManager::updateCards);
 	cardEditForm->connectCardManager(cardManager);
+	//загрузка персональных карт
 	cardManager->loadCards("Cards.json");
+
 	addVideoSourceForm = new AddVideoSourceForm(nullptr, &devicesManager);
 	connect(addVideoSourceForm, &AddVideoSourceForm::VideoSourceAddedByIndex, this, &MainWindow::addCameraSourceByIndex);
 	connect(addVideoSourceForm, &AddVideoSourceForm::VideoSourceAddedByPath, this, &MainWindow::addCameraSourceByPath);
@@ -135,28 +142,29 @@ void MainWindow::init()
 	connect(this, &MainWindow::deleteableVideoSourceAdded, addVideoSourceForm, &AddVideoSourceForm::addDeleteableVideoSource);
 	connect(this, &MainWindow::pixmapUpdated, addVideoSourceForm, &AddVideoSourceForm::updatePixmap);
 
-	connect(cardEditForm, &PersonalCardEditorForm::updateCardList, this, &MainWindow::updatePersonalCards);
 
 	deviceControlForm = new DeviceControlForm(nullptr, &devicesManager);
 	deviceControlForm->connectDevicesManager(&devicesManager);
 	connect(deviceControlForm, &DeviceControlForm::relesListUpdated, this, &MainWindow::updateReles);
 
-	connect(&showingCardManager, &ShowingCardManager::newPassingEvent, this, &MainWindow::newPassingEvent);
 	showingCardManager.connectDevicesManager(&devicesManager);
 
 	loadConfig();
 
+	//настройка соединения с сервером
 	connection = new ConnectionToServer();
 
-	connect(connection, &ConnectionToServer::personalCardAdded, this, &MainWindow::addPersonalCard);
-	connect(connection, &ConnectionToServer::personalCardEdited, this, &MainWindow::editPersonalCard);
-	connect(connection, &ConnectionToServer::personalCardDeleted, this, &MainWindow::deletePersonalCard);
+	connect(cardManager, &PersonalCardManager::personalCardAdded, connection, &ConnectionToServer::addPersonalCard, Qt::ConnectionType::DirectConnection);
+	connect(cardManager, &PersonalCardManager::personalCardEdited, connection, &ConnectionToServer::editPersonalCard, Qt::ConnectionType::DirectConnection);
+	connect(cardManager, &PersonalCardManager::personalCardDeleted, connection, &ConnectionToServer::deletePersonalCard, Qt::ConnectionType::DirectConnection);
 
-	connect(this, &MainWindow::personalCardAdded, connection, &ConnectionToServer::addPersonalCard);
-	connect(this, &MainWindow::personalCardEdited, connection, &ConnectionToServer::editPersonalCard);
-	connect(this, &MainWindow::personalCardDeleted, connection, &ConnectionToServer::deletePersonalCard);
+	connect(connection, &ConnectionToServer::personalCardAdded, cardManager, &PersonalCardManager::personalCardAddedSlot, Qt::ConnectionType::DirectConnection);
+	connect(connection, &ConnectionToServer::personalCardEdited, cardManager, &PersonalCardManager::personalCardEditedSlot, Qt::ConnectionType::DirectConnection);
+	connect(connection, &ConnectionToServer::personalCardDeleted, cardManager, &PersonalCardManager::personalCardDeletedSlot, Qt::ConnectionType::DirectConnection);
 
-	connection->connect("172.16.4.184", "8080");
+	connect(&showingCardManager, &ShowingCardManager::newPassingEvent, connection, &ConnectionToServer::newPassingEvent, Qt::ConnectionType::DirectConnection);
+
+	connection->connect("192.168.1.34", "8080");
 	connection->moveToThread(&connectionThread);
 	connection->run();
 	cout << "RUNNING" << endl;
@@ -352,21 +360,6 @@ void MainWindow::deleteVideoSource(int index)
 		if (config.cameras[i].id == index)
 			config.cameras.removeAt(i);
 	videoSourcesNumber--;
-}
-
-void MainWindow::addPersonalCard(PersonalCard card)
-{
-
-}
-
-void MainWindow::editPersonalCard(PersonalCard card)
-{
-
-}
-
-void MainWindow::deletePersonalCard(PersonalCard card)
-{
-
 }
 
 MainWindow::~MainWindow()

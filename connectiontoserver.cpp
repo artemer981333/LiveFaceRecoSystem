@@ -170,6 +170,7 @@ void ConnectionToServer::stop()
 
 void ConnectionToServer::addPersonalCard(PersonalCard card)
 {
+	cout << "conn: PCA" << endl;
 	string msg = "personal card added\n";
 	msg += personalCardToJSON(card);
 	msg += "!end!";
@@ -180,6 +181,7 @@ void ConnectionToServer::addPersonalCard(PersonalCard card)
 
 void ConnectionToServer::editPersonalCard(PersonalCard card)
 {
+	cout << "conn: PCE" << endl;
 	string msg = "personal card edited\n";
 	msg += personalCardToJSON(card);
 	msg += "!end!";
@@ -190,6 +192,7 @@ void ConnectionToServer::editPersonalCard(PersonalCard card)
 
 void ConnectionToServer::deletePersonalCard(PersonalCard card)
 {
+	cout << "conn: PCD" << endl;
 	string msg = "personal card deleted\n";
 	msg += personalCardToJSON(card);
 	msg += "!end!";
@@ -311,4 +314,22 @@ void ConnectionToServer::sendImage(const string &fileName)
 	string strLen = to_string(length) + "\n";
 	write(socket, boost::asio::const_buffer(strLen.data(), strLen.size()));
 	write(socket, boost::asio::const_buffer(data.data(), data.size()));
+}
+
+PassingEvent::PassingEvent()
+{
+
+}
+
+PassingEvent::PassingEvent(const PassingEvent &other)
+{
+	enterance = other.enterance;
+	id = other.id;
+	passed = other.passed;
+	time = other.time;
+}
+
+PassingEvent::~PassingEvent()
+{
+
 }

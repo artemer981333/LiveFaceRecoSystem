@@ -18,6 +18,9 @@
 
 struct PassingEvent
 {
+	PassingEvent();
+	PassingEvent(const PassingEvent &other);
+	~PassingEvent();
 	QUuid id;
 	bool enterance;
 	bool passed;

@@ -5,6 +5,8 @@
 #include <QJsonValue>
 #include <iostream>
 
+using namespace std;
+
 PersonalCardManager::PersonalCardManager(QObject *parent) : QObject(parent)
 {
 
@@ -106,8 +108,89 @@ void PersonalCardManager::saveCards(const QString &filename)
 	file.close();
 }
 
-void PersonalCardManager::updateCards(const QList<PersonalCard> &newCards)
+void PersonalCardManager::updateCards(QList<PersonalCard> newCards)
 {
+	bool find;
+	for (int i = 0; i < cards.size(); ++i)
+	{
+		find = false;
+		for (int j = 0; j < newCards.size(); ++j)
+		{
+			if (cards[i].id == newCards[j].id)
+			{
+				find = true;
+				if (!(cards[i] == newCards[j]))
+				{
+					cout << "emit PCE" << endl;
+					emit personalCardEdited(newCards[j]);
+					break;
+				}
+			}
+		}
+		if (!find)
+		{
+			cout << "emit PCD" << endl;
+			emit personalCardDeleted(cards[i]);
+		}
+	}
+	for (int i = 0; i < newCards.size(); ++i)
+	{
+		find = false;
+		for (int j = 0; j < cards.size(); ++j)
+		{
+			if (cards[j].id == newCards[i].id)
+			{
+				find = true;
+			}
+		}
+		if (!find)
+		{
+			cout << "emit PCA" << endl;
+			emit personalCardAdded(newCards[i]);
+		}
+	}
+
 	cards.clear();
 	cards.append(newCards);
+}
+
+void PersonalCardManager::personalCardAddedSlot(PersonalCard card)
+{
+	cards.append(card);
+}
+
+void PersonalCardManager::personalCardEditedSlot(PersonalCard card)
+{
+	auto it = std::find_if(cards.begin(), cards.end(), [&](const PersonalCard &c){ return c.id == card.id; });
+	if (it == cards.end())
+		return;
+	*it = card;
+}
+
+void PersonalCardManager::personalCardDeletedSlot(PersonalCard card)
+{
+	auto it = std::find_if(cards.begin(), cards.end(), [&](const PersonalCard &c){ return c.id == card.id; });
+	if (it == cards.end())
+		return;
+	cards.erase(it);
+}
+
+bool PersonalCard::operator ==(const PersonalCard &other) const
+{
+	bool r = true;
+	r &= other.brightnessCorrection == brightnessCorrection;
+	r &= other.contrastCorrection == contrastCorrection;
+	r &= other.id == id;
+	r &= other.imagePath == imagePath;
+	r &= other.lastname == lastname;
+	r &= other.name == name;
+	r &= other.post == post;
+	r &= other.subdivision == subdivision;
+	r &= other.surname == surname;
+	return r;
+}
+
+bool PersonalCard::operator !=(const PersonalCard &other) const
+{
+	return !(other == *this);
 }
